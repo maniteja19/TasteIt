@@ -6,7 +6,8 @@ import AuthNavigation from './navigation/AuthNavigation';
 import CustomerNavigation from './navigation/CustomerNavigation';
 import SellerNavigation from './navigation/SellerNavigation';
 import AdminNavigation from './navigation/AdminNavigation';
-import ProfileScreen from './screens/Customer/Profile';
+import Input from './screens/Customer/Input';
+import SellerProfileScreen from './screens/Seller/SellerProfileScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -22,7 +23,9 @@ function App(){
         <Stack.Screen name = "Admin" component={AdminNavigation}/>
        </Stack.Navigator>
       </NavigationContainer>
+      // <Input/>
       // <ProfileScreen/>
+      // <SellerProfileScreen/>
   );
 }
 

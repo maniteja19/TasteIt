@@ -12,21 +12,38 @@ import {
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+interface Dish {
+  _id: string;
+  dishName: string;
+  dishPrice: string;
+  dishDescription: string;
+  dishQuantity: string;
+  dishType: string;
+}
+
+interface NewDish {
+  dishName: string;
+  dishPrice: string;
+  dishDescription: string;
+  dishQuantity: string;
+  dishType: string;
+}
+
 const SellerDashboard = () => {
-  const [dishes, setDishes] = useState([]);
-  const [isAdd, setIsAdd] = useState(false);
-  const [newDish, setNewDish] = useState({
+  const [dishes, setDishes] = useState<Dish[]>([]);
+  const [isAdd, setIsAdd] = useState<boolean>(false);
+  const [newDish, setNewDish] = useState<NewDish>({
     dishName: '',
     dishPrice: '',
     dishDescription: '',
-    dishQuantity:'',
-    dishType:'',
+    dishQuantity: '',
+    dishType: '',
   });
 
   const fetchDishes = async () => {
     const sellerId = await AsyncStorage.getItem('userId');
     try {
-      const res = await axios.get(
+      const res = await axios.get<{dishes: Dish[]}>(
         `http://192.168.1.10:8080/sellers/${sellerId}/dishes`,
       );
       setDishes(res.data.dishes);
@@ -46,8 +63,9 @@ const SellerDashboard = () => {
         !newDish.dishQuantity
       ) {
         Alert.alert('Please fill all the fields');
+        return;
       }
-      const res = await axios.post(
+      const res = await axios.post<{dish: Dish}>(
         `http://192.168.1.10:8080/sellers/${sellerId}/dishes/`,
         newDish,
       );
@@ -59,20 +77,19 @@ const SellerDashboard = () => {
         dishQuantity: '',
         dishType: '',
       });
-      console.log(res.data);
       setIsAdd(false);
     } catch (error) {
       console.error('Error adding dish', error);
     }
   };
 
-  const deleteDish = async (dishId: any) => {
+  const deleteDish = async (dishId: string) => {
     const sellerId = await AsyncStorage.getItem('userId');
     try {
-      await axios
-        .delete(`http://192.168.1.10:8080/sellers/${sellerId}/dishes/${dishId}`);
-      setDishes(dishes.filter((dish: { _id: any; }) => dish._id !== dishId));
-
+      await axios.delete(
+        `http://192.168.1.10:8080/sellers/${sellerId}/dishes/${dishId}`,
+      );
+      setDishes(dishes.filter(dish => dish._id !== dishId));
     } catch (error) {
       console.error('Error deleting dish', error);
     }
@@ -84,7 +101,7 @@ const SellerDashboard = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Seller Dashboard</Text>
+      <Text style={styles.title}>Hey, Welcome</Text>
       {isAdd ? (
         <View style={styles.inputContainer}>
           <TextInput
@@ -140,11 +157,26 @@ const SellerDashboard = () => {
                 <TouchableOpacity onPress={() => deleteDish(item._id)}>
                   <Text style={styles.deleteButton}>Delete</Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => deleteDish(item._id)}
+                  style={styles.deleteButton}>
+                  <Text>Edit</Text>
+                </TouchableOpacity>
               </View>
             )}
           />
         </View>
       )}
+      {/* <View>
+        <Text style={styles.heading}>Your Dishes</Text>
+        {dishes.map(dish => (
+          <View key={dish._id} style={styles.dishItem}>
+            <Text>{dish.dishName}</Text>
+            <Text>Price: {dish.dishPrice}</Text>
+            <Text>Description: {dish.dishDescription}</Text>
+          </View>
+        ))}
+      </View> */}
     </View>
   );
 };
@@ -163,8 +195,11 @@ const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: 24,
   },
-  flatContainer:{
-    marginBottom:100,
+  flatContainer: {
+    marginBottom: 100,
+  },
+  heading:{
+    fontWeight:'bold',
   },
   input: {
     height: 40,

@@ -25,6 +25,7 @@ export default function Login() {
     //console.log(email,password);
      const userData = {email,password};
      setErrorMessage('');
+     setSecureEntry(true);
      if(!email || !password){
       return Alert.alert('fill all fields');
      }
@@ -39,6 +40,7 @@ export default function Login() {
                         AsyncStorage.setItem('userId',res.data.userId);
                         setEmail('');
                         setPassword('');
+                        setSecureEntry(true);
                         if(res.data.role === 'seller' && res.data.Status === 'approved'){
                           navigation.navigate('Seller');
                         }
