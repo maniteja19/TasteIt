@@ -1,11 +1,19 @@
-import { View, FlatList, StyleSheet, StatusBar, TouchableOpacity,Button, Image } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Searchbar, Text } from 'react-native-paper';
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  StatusBar,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {useNavigation} from '@react-navigation/native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {Searchbar, Text, IconButton} from 'react-native-paper';
 import axios from 'axios';
 import Swiper from 'react-native-swiper';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = () => {
@@ -14,6 +22,43 @@ const HomeScreen = () => {
   const [userDetails, setUserDetails] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [favourite, setFavourite] = useState({});
+  const [favourites, setFavourites] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleSearch = query => {
+    setSearchQuery(query);
+    if (query.length > 0) {
+      const filtered = userDetails.filter(
+        user =>
+          user.restaurantName.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredData(filtered);
+    } else {
+      setFilteredData(userDetails);
+    }
+  };
+  const handleExit = () =>{
+    setSearchQuery('');
+    setIsSearching(false);
+    setFilteredData(userDetails);
+  };
+
+  const handleDishes = item => {
+    navigation.navigate('Dishes', item);
+    setSearchQuery('');
+    setFilteredData(userDetails);
+  };
+
+  const addToFavourite = async id => {
+    const userId = await AsyncStorage.getItem('userId');
+    try {
+      await axios.post('http://192.168.1.10:8080/updateProfile', {userId, id});
+      setFavourites([...favourites,id]);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  console.log(favourites);
   const allRestaurants = async () => {
     try {
       const res = await axios.get('http://192.168.1.10:8080/restaurants');
@@ -23,38 +68,25 @@ const HomeScreen = () => {
       console.error(error);
     }
   };
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-    if (query.length > 0) {
-      const filtered = userDetails.filter((user) =>
-        user.restaurantName.toLowerCase().includes(query.toLowerCase()) ||
-        user.email.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredData(filtered);
-    } else {
-      setFilteredData(userDetails);
+  const getFavourites = async() => {
+    const userId = await AsyncStorage.getItem('userId');
+    try{
+      const response = await axios.get(`http://192.168.1.10:8080/favourites/${userId}`);
+      setFavourites(response.data.data);
+    }
+    catch(error){
+      console.log(error);
     }
   };
-
   useEffect(() => {
+    getFavourites();
     allRestaurants();
   }, []);
-  const handleDishes = (item) =>{
-    navigation.navigate("Dishes",item);
-    setSearchQuery('');
-    setFilteredData(userDetails);
-  };
-  const addToFavourite = async (id) =>{
-    const userId = await AsyncStorage.getItem('userId');
-    await axios
-      .post('http://192.168.1.10:8080/updateProfile', {userId, id})
-      .then(res => console.log(res.data));
-      setFavourite(true);
-  };
-  const removeFromFavourite = async (id) => {
-    setFavourite(false);
 
+  const removeFromFavourite = async id => {
+    setFavourite(prevFav => ({...prevFav, [id]: false}));
   };
+
   const renderUser = ({item}) => (
     <TouchableOpacity onPress={() => handleDishes(item)}>
       <View style={styles.item}>
@@ -71,7 +103,7 @@ const HomeScreen = () => {
             <Text style={styles.userDetails}>{item.address}</Text>
           </View>
           <View>
-            {favourite ? (
+            {favourites.includes(item._id) ? (
               <TouchableOpacity onPress={() => removeFromFavourite(item._id)}>
                 <FontAwesome name="heart" size={30} color={'red'} />
               </TouchableOpacity>
@@ -80,7 +112,6 @@ const HomeScreen = () => {
                 <FontAwesome name="heart-o" size={30} />
               </TouchableOpacity>
             )}
-            <Text>ok</Text>
           </View>
         </View>
       </View>
@@ -92,16 +123,37 @@ const HomeScreen = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
 
       <View style={styles.searchbarContainer}>
-        <Searchbar
-          placeholder="Search for restaurant"
-          onChangeText={handleSearch}
-          value={searchQuery}
-          style={styles.searchbar}
-          inputStyle={styles.searchbarInput}
-          iconColor="grey"
-        />
+        {isSearching ? (
+          <Searchbar
+            placeholder="Search for Dishes"
+            onChangeText={handleSearch}
+            value={searchQuery}
+            style={styles.searchbar}
+            inputStyle={styles.searchbarInput}
+            // eslint-disable-next-line react/no-unstable-nested-components
+            icon={() => (
+              <Ionicons
+                name="chevron-back-outline"
+                size={30}
+                color={'black'}
+                onPress={handleExit}
+              />
+            )}
+            iconColor="grey"
+          />
+        ) : (
+          <Searchbar
+            placeholder="Search for restaurant"
+            onChangeText={handleSearch}
+            value={searchQuery}
+            style={styles.searchbar}
+            inputStyle={styles.searchbarInput}
+            iconColor="grey"
+            onPress={() => setIsSearching(true)}
+          />
+        )}
       </View>
-      {searchQuery === '' ? (
+      { !isSearching && searchQuery === '' ? (
         <FlatList
           data={filteredData}
           renderItem={renderUser}
@@ -142,12 +194,10 @@ const HomeScreen = () => {
                   </View>
                 </Swiper>
               </View>
-              <View>
-                <View style={styles.headerContainer}>
-                  <View style={styles.line} />
-                  <Text style={styles.headerText}>All Restaurants</Text>
-                  <View style={styles.line} />
-                </View>
+              <View style={styles.headerContainer}>
+                <View style={styles.line} />
+                <Text style={styles.headerText}>All Restaurants</Text>
+                <View style={styles.line} />
               </View>
             </View>
           }
@@ -192,10 +242,10 @@ const styles = StyleSheet.create({
     paddingTop: 70,
     paddingBottom: 20,
   },
-  cardContainer:{
-    flexDirection:'row',
-    justifyContent:'space-between',
-    paddingHorizontal:16,
+  cardContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
   },
   item: {
     paddingBottom: 16,
@@ -210,36 +260,16 @@ const styles = StyleSheet.create({
     height: 200,
     marginBottom: 10,
     borderTopRightRadius: 10,
-    borderTopLeftRadius:10,
+    borderTopLeftRadius: 10,
   },
-  userName: {
-    fontSize: 18,
-    color: '#333',
-    fontWeight: '500',
-  },
-  restaurantName:{
-    fontWeight:'600',
-    fontSize:25,
-    color:'black',
+  restaurantName: {
+    fontWeight: '600',
+    fontSize: 25,
+    color: 'black',
   },
   userDetails: {
     fontSize: 16,
     color: '#555',
-  },
-  button: {
-    margin: 20,
-    backgroundColor: '#ff6347',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  buttonElevation: {
-    elevation: 2,
-  },
-  buttonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontSize: 16,
   },
   slideContainer: {
     height: 200,
@@ -262,14 +292,12 @@ const styles = StyleSheet.create({
     marginTop: 40,
     marginBottom: 20,
   },
-
   line: {
     flex: 1,
     height: 1,
     backgroundColor: '#ccc',
     marginHorizontal: 6,
   },
-
   headerText: {
     fontSize: 18,
     color: '#333',

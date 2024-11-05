@@ -4,9 +4,10 @@ import BasketScreen from '../screens/Customer/BasketScreen';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import ProfileNavigation from './ProfileNavigation';
-import DishNavigation from './DishNavigation';
 import OrderScreen from '../screens/Customer/OrderScreen';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import HomeScreen from '../screens/Customer/HomeScreen';
+import FavouritesScreen from '../screens/Customer/FavouritesScreen';
 
 const TabNav = createBottomTabNavigator();
 
@@ -21,8 +22,8 @@ interface TabConfig {
 const CustomerNavigation = () => {
   const tabConfig: TabConfig[] = [
     {
-      name: 'food',
-      Component: DishNavigation,
+      name: 'Home',
+      Component: HomeScreen,
       focusedIcon: 'home',
       UnfocusedIcon: 'home-outline',
       iconComponent: Ionicons,
@@ -32,6 +33,13 @@ const CustomerNavigation = () => {
       Component: ProfileNavigation,
       focusedIcon: 'user',
       UnfocusedIcon: 'user-o',
+      iconComponent: FontAwesome,
+    },
+    {
+      name: 'Favourites',
+      Component: FavouritesScreen,
+      focusedIcon: 'heart',
+      UnfocusedIcon: 'heart-o',
       iconComponent: FontAwesome,
     },
     {
