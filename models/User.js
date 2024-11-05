@@ -25,8 +25,7 @@ const userScheme = new mongoose.Schema({
     address:String,
     image:String,
     favourites:[{
-        type: mongoose.Schema.Types.ObjectId, ref:'Seller',
-        unique:true,
+        type: mongoose.Schema.Types.ObjectId, ref:'seller',
     }],
 },{timestamps:true})
 

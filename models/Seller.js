@@ -42,7 +42,10 @@ const SellerScheme = new mongoose.Schema({
     dishes:[{
         type: mongoose.Schema.Types.ObjectId, ref: 'dishes'
     }],
-    count: Number,
+    count: {
+        type:Number,
+        default:0,
+    },
 },{timestamps:true})
 
 const Seller = mongoose.model('seller',SellerScheme)

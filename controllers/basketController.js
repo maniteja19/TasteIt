@@ -44,7 +44,9 @@ exports.removeFromBasket = async (req, res) => {
     const basket = await Basket.findOne({ user: userId });
     if (!basket) 
       return res.status(404).json({ message: 'Basket not found' });
+    console.log(basket.items);
     basket.items = basket.items.filter(item => item.dish.toString() !== dishId);
+    console.log(basket.items);
     await basket.save();
     res.status(200).json(basket);
   } catch (error) {
@@ -57,6 +59,7 @@ exports.getBasket = async (req, res) => {
   const { userId } = req.params;
   try {
     const basket = await Basket.findOne({ user: userId }).populate('items.dish');
+    console.log(basket);
     if(!basket){
       return res.status(404).json({error:"basket not found"});
     }

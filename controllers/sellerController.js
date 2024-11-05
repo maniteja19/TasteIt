@@ -44,10 +44,12 @@ const restaurantsController = async (req,res) => {
 const deleterestaurantController = async (req,res) =>{
     try{
         const restaurantId = req.params.id;
-        const response = await Seller.findByIdAndDelete(restaurantId);
+        const response = await Seller.findById(restaurantId);
         if(!response){
             return res.status(404).send({message : "restaurant not found"});
         }
+        response.status = "rejected"
+        await response.save();
         res.status(204).send({message: "successfully deleted", Status: "Success"});
     }
     catch(error){
