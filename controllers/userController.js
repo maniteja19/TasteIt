@@ -13,10 +13,8 @@ const userDetails = async (req,res) =>{
 
 const updateProfileController = async (req,res)=>{
     try{
-        const {name, email,phone, address,image,userId, id} = req.body;
-        console.log(userId, id);
+        const {name, email,phone, address,image,userId, restaurantId} = req.body;
         const user = await User.findOne({_id:userId}) || await User.findOne({email});
-        // console.log(user);
         await User.updateOne({email: user.email},{
           $set:{
             name,
@@ -26,9 +24,9 @@ const updateProfileController = async (req,res)=>{
           } 
         })
         if(userId){
-          const seller = await Seller.findOne({_id:id});
+          const seller = await Seller.findOne({_id:restaurantId});
           seller.count = seller.count+1;
-          user.favourites.push({_id:id});
+          user.favourites.push({_id:restaurantId});
           await user.save();
           await seller.save();
           return res.status(200).send({message:'Successfully added to favourite list.'});
@@ -41,32 +39,40 @@ const updateProfileController = async (req,res)=>{
     }
 
 }
-// const getFavourites = async (req, res) =>{
-
-//   const {id} = req.params;
-//   const user = await User.findOne({_id:id}).populate('favourites._id');
-//   console.log(user);
-//   if(!user){
-//     res.status(400).send({message:"user is not found"});
-//   }
-//   res.status(200).json({data:user, status:"ok"});
-// }
 const getFavourites = async (req, res) => {
   const { id } = req.params;
 
   try {
     const user = await User.findOne({ _id: id })//.populate('favourites'); // Populate the favourites field
-    console.log(user);
     if (!user) {
       return res.status(400).send({ message: "User not found" });
     }
-
-    res.status(200).json({ data: user.favourites, status: "ok" });
+    const favourites = await Seller.find({
+      _id: { $in: user.favourites },
+    });
+    res.status(200).send({ status: "ok", data: favourites });
   } catch (error) {
     console.error("Error fetching favourites:", error);
     res.status(500).send({ message: "Server error" });
   }
 };
 
-module.exports = {userDetails,updateProfileController,getFavourites};
+
+const removeFavorites = async (req, res) => {
+  const { userId, restaurantId } = req.body;
+  try {
+    await User.findByIdAndUpdate(
+      userId,
+      { $pull: { favourites: restaurantId } }
+    );
+    const seller = await Seller.findOne({_id:restaurantId});
+    seller.count = seller.count-1;
+    res.status(204).json({ status: 'ok', message: 'Successfully removed from favourites' });
+  } catch (error) {
+    res.status(500).json({ status: 'failed', message: error.message });
+  }
+};
+
+
+module.exports = {userDetails,updateProfileController,getFavourites,removeFavorites};
  
