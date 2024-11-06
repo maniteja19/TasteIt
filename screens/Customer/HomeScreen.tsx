@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {useNavigation} from '@react-navigation/native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Searchbar, Text, IconButton} from 'react-native-paper';
 import axios from 'axios';
@@ -21,7 +21,6 @@ const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [userDetails, setUserDetails] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
-  const [favourite, setFavourite] = useState({});
   const [favourites, setFavourites] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -49,16 +48,19 @@ const HomeScreen = () => {
     setFilteredData(userDetails);
   };
 
-  const addToFavourite = async id => {
+  const addToFavourite = async (restaurantId:string) => {
     const userId = await AsyncStorage.getItem('userId');
     try {
-      await axios.post('http://192.168.1.10:8080/updateProfile', {userId, id});
-      setFavourites([...favourites,id]);
+      await axios.post('http://192.168.1.10:8080/updateProfile', {
+        userId,
+        restaurantId,
+      });
+      setFavourites([...favourites, restaurantId]);
     } catch (error) {
       console.error(error);
     }
   };
-  console.log(favourites);
+
   const allRestaurants = async () => {
     try {
       const res = await axios.get('http://192.168.1.10:8080/restaurants');
@@ -72,19 +74,40 @@ const HomeScreen = () => {
     const userId = await AsyncStorage.getItem('userId');
     try{
       const response = await axios.get(`http://192.168.1.10:8080/favourites/${userId}`);
-      setFavourites(response.data.data);
+      const resto = response.data.data.map((restaurant)=> restaurant._id);
+      setFavourites(resto);
     }
     catch(error){
       console.log(error);
     }
   };
   useEffect(() => {
-    getFavourites();
+    // getFavourites();
     allRestaurants();
   }, []);
-
-  const removeFromFavourite = async id => {
-    setFavourite(prevFav => ({...prevFav, [id]: false}));
+  useFocusEffect(
+    useCallback(()=>{
+      getFavourites();
+    })
+  )
+  const removeFromFavourite = async (restaurantId:string) => {
+    try{
+      const userId = await AsyncStorage.getItem('userId');
+      const response = await axios.post(
+        'http://192.168.1.10:8080/favorites',
+        {
+          userId,
+          restaurantId,
+        },
+      );
+      setFavourites(prev =>
+        prev.filter(restaurant => restaurant._id !== restaurantId),
+      );
+      getFavourites();
+    }
+    catch(error){
+      console.log(error);
+    }
   };
 
   const renderUser = ({item}) => (
