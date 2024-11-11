@@ -3,35 +3,44 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import SellerHomeScreen from '../screens/Seller/SellerHomeScreen';
 import SellerProfileScreen from '../screens/Seller/SellerProfileScreen';
+import StatsScreen from '../screens/Seller/StatsScreen';
+import OrderedDishesScreen from '../screens/Seller/OrderedDishesScreen';
 
 const TabNav = createBottomTabNavigator();
 const SellerNavigation = ()=>{
     const tabConfig = [
-    {
-      name:'Home',
-      Component:SellerHomeScreen,
-      focusedIcon:'home',
-      UnfocusedIcon:'home-outline',
-      iconComponent:Ionicons,
-    },
-    {
-      name:'Profile',
-      Component:SellerProfileScreen,
-      focusedIcon:'user',
-      UnfocusedIcon:'user-o',
-      iconComponent:FontAwesome,
-    },
-    // {
-    //   name:'Details',
-    //   Component:BasketScreen,
-    //   focusedIcon:'cart',
-    //   UnfocusedIcon:'cart-outline',
-    //   iconComponent:Ionicons,
-    // },
-
-  ];
+      {
+        name: 'Home',
+        Component: SellerHomeScreen,
+        focusedIcon: 'home',
+        UnfocusedIcon: 'home-outline',
+        iconComponent: Ionicons,
+      },
+      {
+        name: 'Stats',
+        Component: StatsScreen,
+        focusedIcon: 'stats-chart',
+        UnfocusedIcon: 'stats-chart-outline',
+        iconComponent: Ionicons,
+      },
+      {
+        name: 'Ordered dishes',
+        Component: OrderedDishesScreen,
+        focusedIcon: 'food',
+        UnfocusedIcon: 'food-outline',
+        iconComponent: MaterialIcon,
+      },
+      {
+        name: 'Profile',
+        Component: SellerProfileScreen,
+        focusedIcon: 'user',
+        UnfocusedIcon: 'user-o',
+        iconComponent: FontAwesome,
+      },
+    ];
   const screenOption = ({route})=>({
     //eslint-disable-next-line react/no-unstable-nested-components
     tabBarIcon: ({focused, size, color }) =>{

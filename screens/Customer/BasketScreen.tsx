@@ -5,13 +5,12 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
+  Modal,
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome6';
-import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
-import {Modal} from 'react-native-paper';
 
 const BasketScreen = () => {
   const navigation = useNavigation();
@@ -83,10 +82,12 @@ const BasketScreen = () => {
     }, []),
   );
   const order = async basket => {
+    const grandTotal = totalPrice;
     try {
       await axios
         .post('http://192.168.1.10:8080/orders', {
           basket,
+          grandTotal,
         })
         .then(res => console.log(res));
     } catch (error) {
@@ -167,7 +168,7 @@ const BasketScreen = () => {
                 </Text>
                 <Text style={styles.summaryItem}>Delivery Fee: Free</Text>
                 <Text style={styles.summaryTotal}>
-                  Total Amount: ${totalPrice.toFixed(2)}
+                  Total Amount: ₹{totalPrice.toFixed(2)}
                 </Text>
               </View>
             }
@@ -191,39 +192,6 @@ const BasketScreen = () => {
               </View>
             </TouchableOpacity>
           </View>
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={modalVisible}
-            onRequestClose={() => setModalVisible(false)}>
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <FontAwesome
-                  name="check-circle"
-                  size={80}
-                  color="#28a745"
-                  style={styles.icon}
-                />
-
-                <Text style={styles.title}>Hooray! 🎉</Text>
-                <Text style={styles.message}>
-                  Your order is on its way! We'll notify you when it's arriving
-                  hot and fresh.
-                </Text>
-
-                <TouchableOpacity
-                  style={styles.primaryButton}
-                  onPress={() => setModalVisible(false)}>
-                  <Text style={styles.primaryButtonText}>Great, Thanks!</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.secondaryButton}>
-                  <Text style={styles.secondaryButtonText}>
-                    Order More Goodies
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
         </>
       ) : (
         <View style={styles.emptyContainer}>
@@ -234,6 +202,41 @@ const BasketScreen = () => {
           </TouchableOpacity>
         </View>
       )}
+      <View>
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <FontAwesome
+                name="check-circle"
+                size={80}
+                color="#28a745"
+                style={styles.icon}
+              />
+
+              <Text style={styles.title}>Hooray! 🎉</Text>
+              <Text style={styles.message}>
+                Your order is on its way! We'll notify you when it's arriving
+                hot and fresh.
+              </Text>
+
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={() => setModalVisible(false)}>
+                <Text style={styles.primaryButtonText}>Great, Thanks!</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.secondaryButton}>
+                <Text style={styles.secondaryButtonText}>
+                  Order More Goodies
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </View>
     </View>
   );
 };
@@ -345,17 +348,26 @@ const styles = StyleSheet.create({
   },
   buttonText: {color: 'white', fontSize: 20, fontWeight: '500'},
   modalOverlay: {
-    // flex: 1,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    // backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
     width: '85%',
+    height:400,
     padding: 25,
     backgroundColor: 'white',
     borderRadius: 15,
     alignItems: 'center',
+    // width: 320,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 10,
   },
   icon: {marginBottom: 15},
   title: {fontSize: 28, fontWeight: 'bold', marginBottom: 10},

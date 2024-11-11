@@ -20,6 +20,7 @@ function App(){
         <Stack.Screen name = "Admin" component={AdminNavigation}/>
        </Stack.Navigator>
       </NavigationContainer>
+      // <OrderedDishesScreen/>
   );
 }
 

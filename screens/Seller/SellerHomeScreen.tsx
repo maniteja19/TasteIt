@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Modal,
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -39,6 +40,13 @@ const SellerDashboard = () => {
     dishQuantity: '',
     dishType: '',
   });
+
+  const [expandedDescriptions, setExpandedDescriptions] = useState<{
+    [key: string]: boolean;
+  }>({});
+  const [showReadMore, setShowReadMore] = useState<{[key: string]: boolean}>(
+    {},
+  );
 
   const fetchDishes = async () => {
     const sellerId = await AsyncStorage.getItem('userId');
@@ -82,7 +90,21 @@ const SellerDashboard = () => {
       console.error('Error adding dish', error);
     }
   };
-
+      const toggleDescription = (dishId: string) => {
+        setExpandedDescriptions(prevState => ({
+          ...prevState,
+          [dishId]: !prevState[dishId],
+        }));
+      };
+      const onTextLayout = (dishId: string, event: any) => {
+        const {lines} = event.nativeEvent;
+        if (lines.length > 3) {
+          setShowReadMore(prevState => ({
+            ...prevState,
+            [dishId]: true,
+          }));
+        }
+      };
   const deleteDish = async (dishId: string) => {
     const sellerId = await AsyncStorage.getItem('userId');
     try {
@@ -94,96 +116,139 @@ const SellerDashboard = () => {
       console.error('Error deleting dish', error);
     }
   };
-
+  const renderDishes = ({item}) => {
+    const isExpanded = expandedDescriptions[item._id];
+    const shouldShowReadMore = showReadMore[item._id];
+    return (
+      <View style={styles.itemContainer}>
+        <View style={styles.itemDetails}>
+          <Text style={styles.itemName}>{item.dishName}</Text>
+          <View style={styles.itemNameContainer}>
+            <View style={styles.itemRatingContainer}>
+              <Text style={styles.itemPrice}>₹{item.dishPrice}</Text>
+              <Text
+                style={styles.itemDescription}
+                numberOfLines={isExpanded ? undefined : 2}
+                onTextLayout={event => onTextLayout(item._id, event)}>
+                {item.dishDescription}
+              </Text>
+              {shouldShowReadMore && (
+                <TouchableOpacity onPress={() => toggleDescription(item._id)}>
+                  <Text style={styles.readMoreText}>
+                    {isExpanded ? 'Show Less' : 'Read More'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            <View style={styles.sideContainer}>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => {
+                  deleteDish(item._id);
+                }}>
+                <Text style={styles.addButtonText}>Delete</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.editButton}>
+                <Text style={styles.editButtonText}>Edit</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+      // const handleScroll = event => {
+      //   const scrollY = event.nativeEvent.contentOffset.y;
+      //   setShowHeaderText(scrollY > 60);
+      // };
   useEffect(() => {
     fetchDishes();
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Hey, Welcome</Text>
-      {isAdd ? (
-        <View style={styles.inputContainer}>
-          <TextInput
-            placeholder="Dish Name"
-            value={newDish.dishName}
-            onChangeText={value => setNewDish({...newDish, dishName: value})}
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Dish Price"
-            value={newDish.dishPrice}
-            onChangeText={value => setNewDish({...newDish, dishPrice: value})}
-            keyboardType="numeric"
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Dish Description"
-            value={newDish.dishDescription}
-            onChangeText={value =>
-              setNewDish({...newDish, dishDescription: value})
-            }
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Dish Type"
-            value={newDish.dishType}
-            onChangeText={value => setNewDish({...newDish, dishType: value})}
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Dish Quantity"
-            value={newDish.dishQuantity}
-            onChangeText={value =>
-              setNewDish({...newDish, dishQuantity: value})
-            }
-            style={styles.input}
-          />
-          <Button title="Add Dish" onPress={addDish} />
-          <Button title="Cancel" onPress={() => setIsAdd(false)} />
-        </View>
-      ) : (
+      <Text style={styles.title}>Hey, Welcome Back</Text>
         <View style={styles.flatContainer}>
-          <Button title="Add Dish" onPress={() => setIsAdd(true)} />
-          <FlatList
-            data={dishes}
-            showsVerticalScrollIndicator={false}
-            keyExtractor={item => item._id}
-            renderItem={({item}) => (
-              <View style={styles.dishItem}>
-                <Text>Dish: {item.dishName}</Text>
-                <Text>Price: {item.dishPrice}</Text>
-                <Text>Description: {item.dishDescription}</Text>
-                <TouchableOpacity onPress={() => deleteDish(item._id)}>
-                  <Text style={styles.deleteButton}>Delete</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => deleteDish(item._id)}
-                  style={styles.deleteButton}>
-                  <Text>Edit</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-        </View>
-      )}
-      {/* <View>
-        <Text style={styles.heading}>Your Dishes</Text>
-        {dishes.map(dish => (
-          <View key={dish._id} style={styles.dishItem}>
-            <Text>{dish.dishName}</Text>
-            <Text>Price: {dish.dishPrice}</Text>
-            <Text>Description: {dish.dishDescription}</Text>
+          <View style={styles.addDishContainer}>
+            <Text style={styles.addMoreText}>Add More Dishes : </Text>
+            <TouchableOpacity
+              onPress={() => setIsAdd(true)}
+              style={styles.addDishButton}>
+              <Text style={styles.addDishText}>Add Dish</Text>
+            </TouchableOpacity>
           </View>
-        ))}
-      </View> */}
+          <Text style={styles.subheading}> AVAILABLE DISHES </Text>
+          <View style={styles.footerContainer}>
+            <FlatList
+              data={dishes}
+              showsVerticalScrollIndicator={false}
+              keyExtractor={item => item._id}
+              renderItem={renderDishes}
+            />
+          </View>
+        </View>
+      <Modal visible={isAdd} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Add New Dish</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder="Dish Name"
+                value={newDish.dishName}
+                onChangeText={value =>
+                  setNewDish({...newDish, dishName: value})
+                }
+                style={styles.input}
+              />
+              <TextInput
+                placeholder="Dish Price"
+                value={newDish.dishPrice}
+                onChangeText={value =>
+                  setNewDish({...newDish, dishPrice: value})
+                }
+                keyboardType="numeric"
+                style={styles.input}
+              />
+              <TextInput
+                placeholder="Dish Description"
+                value={newDish.dishDescription}
+                onChangeText={value =>
+                  setNewDish({...newDish, dishDescription: value})
+                }
+                style={styles.input}
+              />
+              <TextInput
+                placeholder="Dish Type"
+                value={newDish.dishType}
+                onChangeText={value =>
+                  setNewDish({...newDish, dishType: value})
+                }
+                style={styles.input}
+              />
+              <TextInput
+                placeholder="Dish Quantity"
+                value={newDish.dishQuantity}
+                onChangeText={value =>
+                  setNewDish({...newDish, dishQuantity: value})
+                }
+                style={styles.input}
+              />
+            </View>
+            <View style={styles.buttonContainer}>
+              <Button title="Add Dish" onPress={()=> setIsAdd(true)} />
+              <TouchableOpacity onPress={()=>setIsAdd(false)} style={styles.cancelButton}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
     backgroundColor: '#f8f9fa',
     flex: 1,
   },
@@ -191,6 +256,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 16,
+    color: 'black',
+    fontFamily: 'Arial',
+    marginLeft: 10,
   },
   inputContainer: {
     marginBottom: 24,
@@ -198,15 +266,16 @@ const styles = StyleSheet.create({
   flatContainer: {
     marginBottom: 100,
   },
-  heading:{
-    fontWeight:'bold',
+  heading: {
+    fontWeight: 'bold',
   },
   input: {
     height: 40,
     borderColor: '#ccc',
     borderWidth: 1,
     paddingHorizontal: 8,
-    marginBottom: 12,
+    // marginBottom: 12,
+    margin: 12,
   },
   dishItem: {
     padding: 16,
@@ -219,6 +288,183 @@ const styles = StyleSheet.create({
     color: 'red',
     marginTop: 8,
   },
+  itemDetails: {
+    flex: 1,
+  },
+  itemRating: {
+    fontSize: 18,
+    color: 'goldenrod',
+  },
+  itemPrice: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#262525',
+    marginVertical: 4,
+  },
+  itemDescription: {
+    fontSize: 18,
+    marginBottom: 8,
+    color: '#4f4a4a',
+  },
+  addButtonText: {
+    color: 'red',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  itemRatingContainer: {
+    flex: 0.6,
+  },
+  itemContainer: {
+    flexDirection: 'column',
+    padding: 30,
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
+    marginBottom: 8,
+    marginTop: 8,
+    marginHorizontal: 10,
+    elevation: 4,
+  },
+  itemNameContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  itemName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#121111',
+    width: '70%',
+  },
+
+  buttonContainer: {
+    alignItems: 'flex-end',
+    marginTop: 4,
+  },
+  addButton: {
+    backgroundColor: '#ebd7d5',
+    paddingVertical: 6,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  ratingContainer: {
+    backgroundColor: 'green',
+    marginVertical: '2%',
+    paddingVertical: '2%',
+    paddingHorizontal: '2%',
+    borderRadius: 10,
+  },
+  headingText: {
+    fontSize: 20,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  searchbar: {
+    marginBottom: 16,
+  },
+  searchbarInput: {
+    color: 'black',
+  },
+  searchIcon: {
+    alignSelf: 'flex-start',
+  },
+  readMoreText: {
+    color: 'blue',
+    fontSize: 14,
+  },
+  editButton: {
+    backgroundColor: 'grey',
+    borderRadius: 8,
+    paddingVertical: 6,
+    marginTop: 12,
+  },
+  editButtonText: {
+    color: 'white',
+    fontSize: 18,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontFamily: 'Arial',
+  },
+  sideContainer: {
+    marginTop: -18,
+  },
+  subheading: {
+    fontFamily: 'Arial',
+    fontWeight: 'bold',
+    fontSize: 20,
+    textAlign: 'center',
+    marginVertical: 10,
+    paddingVertical: 10,
+    color: 'black',
+    backgroundColor: '#f5f0f0',
+  },
+  addDishButton: {
+    backgroundColor: 'skyblue',
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 10,
+    paddingVertical: 10,
+    width: 100,
+    borderRadius: 8,
+  },
+  addDishContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 14,
+    justifyContent: 'space-between',
+  },
+  addDishText: {
+    color: 'white',
+    fontWeight: '700',
+    fontFamily: 'Arial',
+    fontSize: 18,
+  },
+  addMoreText: {
+    fontSize: 18,
+    color: 'black',
+    fontFamily: 'Arial',
+  },
+  footerContainer: {
+    paddingBottom: 220,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    marginBottom: 15,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  inputContainer: {
+    marginBottom: 10,
+  },
+  input: {
+    borderBottomWidth: 1,
+    marginBottom: 15,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  buttonContainer: {
+    marginTop: 10,
+  },
+  cancelButton: {
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  cancelText: {
+    color: 'red',
+    fontSize: 16,
+  },
 });
+
 
 export default SellerDashboard;

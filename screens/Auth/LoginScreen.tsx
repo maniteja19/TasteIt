@@ -1,6 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity, View, TextInput, Image, ScrollView, Alert} from 'react-native';
 import React, { useState } from 'react';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -9,8 +8,9 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Login() {
-  const [secureEntry, setSecureEntry] = useState(true);
   const navigation = useNavigation();
+
+  const [secureEntry, setSecureEntry] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -18,22 +18,24 @@ export default function Login() {
   const handleSignup = ()=>{
     navigation.navigate('WelcomePage');
   };
-  // const handleBack = () => {
-  //   navigation.goBack();
-  // }
   const handleLogin = ()=>{
-    //console.log(email,password);
+
      const userData = {email,password};
      setErrorMessage('');
      setSecureEntry(true);
-     if(!email || !password){
-      return Alert.alert('fill all fields');
+     if(!email && !password){
+      return setErrorMessage('Enter email and Password.');
+     }
+     else if(!email){
+      return setErrorMessage('Enter your email.');
+     }
+     else if(!password){
+      return setErrorMessage('Enter your password.')
      }
             axios
                 .post('http://192.168.1.10:8080/login',userData)
                 .then(res => {
                     if(res.data.status === 'Ok'){
-                        Alert.alert('Welcome Back');
                         AsyncStorage.setItem('token',res.data.data);
                         AsyncStorage.setItem('isLogedIn',JSON.stringify(true));
                         AsyncStorage.setItem('role',res.data.data);
@@ -71,15 +73,6 @@ export default function Login() {
     <SafeAreaView>
       <ScrollView keyboardShouldPersistTaps={'always'}>
         <View style = {styles.container}>
-          {/* <TouchableOpacity
-              style = {styles.exitButton}
-              onPress={handleBack}>
-            <Ionicons
-              name = "arrow-back-outline"
-              size ={30}
-              color = {'black'}
-            />
-          </TouchableOpacity> */}
           <View style = {styles.titleContainer}>
             <Text style = {styles.headingText}>Login Here</Text>
           </View>
@@ -145,11 +138,11 @@ export default function Login() {
                   <Text style ={styles.errorMessage}>{errorMessage}</Text>
                 ) : null
               }
-              <View>
+              {/* <View>
                 <TouchableOpacity>
                   <Text style={styles.forgetText}>Forget password?</Text>
                 </TouchableOpacity>
-              </View>
+              </View> */}
           </View>
           <View>
                   <TouchableOpacity style={[styles.button,styles.buttonElevation]} onPress={() => handleLogin()} >
