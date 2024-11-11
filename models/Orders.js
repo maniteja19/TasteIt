@@ -9,6 +9,9 @@ const orderScheme = new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId, ref:'users',
         required: true,
     },
+    total:{
+        type:Number,
+    },
     items: [{
         dish: {
             type: mongoose.Schema.Types.ObjectId, ref: 'dishes',

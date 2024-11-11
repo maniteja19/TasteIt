@@ -22,7 +22,10 @@ const userScheme = new mongoose.Schema({
         type:String,
         Required:true,
     },
-    address:String,
+    address:{
+        type:String,
+        default:'',
+    },
     image:String,
     favourites:[{
         type: mongoose.Schema.Types.ObjectId, ref:'seller',

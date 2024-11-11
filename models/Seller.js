@@ -38,6 +38,7 @@ const SellerScheme = new mongoose.Schema({
     },
     address:{
         type: String,
+        default:'',
     },
     dishes:[{
         type: mongoose.Schema.Types.ObjectId, ref: 'dishes'

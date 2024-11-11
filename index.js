@@ -6,6 +6,7 @@ const adminRoute = require('./Routes/adminRoutes.js');
 const sellerRoute = require('./Routes/sellerRoutes.js');
 const basketRoutes = require('./Routes/basketRoutes.js');
 const ordersRoute = require('./Routes/ordersRoute.js');
+const commentsRoute = require('./Routes/commentsRoutes.js')
 const app = express();
 app.use(express.json())
 
@@ -18,5 +19,6 @@ app.use('/',adminRoute)
 app.use('/',sellerRoute)
 app.use('/basket',basketRoutes);
 app.use('/',ordersRoute);
+app.use('/',commentsRoute)
 const PORT =  8080;
 app.listen(PORT, ()=>console.log(`Server is running at port:${PORT}`)); 
