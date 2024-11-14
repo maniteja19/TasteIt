@@ -48,7 +48,7 @@ const getOrderedDishes = async(req,res) => {
     }
 
     const orders = await Orders.find({sellerId : id},{userId:1,'items.dish':1 ,total:1,createdAt:1,'items.quantity':1,})
-    .populate({path: 'items.dish', select: 'dishName -_id'})
+    .populate({path: 'items.dish', select: 'dishName _id'})
     .populate({path:'userId', select: 'name address -_id'});
     res.status(200).json(orders);
   }

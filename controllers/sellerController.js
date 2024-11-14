@@ -116,6 +116,23 @@ const deleteDishes = async (req,res) =>{
     }
 }
 
+const updateDishes = async (req,res) => {
+    const { id } = req.params;
+    const {dishName, dishQuantity,dishDescription, dishPrice} = req.body;
+    try{
+        console.log(id,dishName)
+        const response = await Dish.findByIdAndUpdate(id,{dishQuantity,dishDescription,dishPrice,dishName},{new:true});
+        if(!response){
+            res.status(404).json({message:"failed"})
+        }
+        res.status(200).json({message:"successfully updated"});
+    }
+    catch(error){
+        res.status(500).json({"error":error});
+    }
+}
+
+
 module.exports = {
     restaurantsController,
     deleterestaurantController,
@@ -123,5 +140,6 @@ module.exports = {
     getDishes,
     deleteDishes,
     RestaurantDetails,
-    updateSellerController
+    updateSellerController,
+    updateDishes,
 }; 

@@ -9,7 +9,8 @@ const {
     getDishes,
     deleteDishes,
     RestaurantDetails,
-    updateSellerController
+    updateSellerController,
+    updateDishes
 } = require('../controllers/sellerController');
 
 router.get('/sellerDetails',verifyToken,RestaurantDetails);
@@ -19,6 +20,7 @@ router.delete('/restaurants/:id',deleterestaurantController);
 
 router.post('/sellers/:id/dishes',addDishes);
 router.get('/sellers/:id/dishes',getDishes);
+router.put('/sellers/:id/dishes',updateDishes);
 router.delete('/sellers/:sellerId/dishes/:dishId',deleteDishes);
 
 module.exports = router; 
