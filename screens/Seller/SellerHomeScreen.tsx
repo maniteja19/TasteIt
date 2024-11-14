@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Alert,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -31,6 +32,7 @@ interface NewDish {
 }
 
 const SellerDashboard = () => {
+  const [loading, setLoading] = useState(true);
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [isAdd, setIsAdd] = useState<boolean>(false);
   const [newDish, setNewDish] = useState<NewDish>({
@@ -40,7 +42,9 @@ const SellerDashboard = () => {
     dishQuantity: '',
     dishType: '',
   });
-
+  const [isSelected, setIsSelected] = useState(false);
+  const [isDelete, setIsDelete] = useState(false);
+  const [currentDishId, setCuurentDishId] = useState('');
   const [expandedDescriptions, setExpandedDescriptions] = useState<{
     [key: string]: boolean;
   }>({});
@@ -116,6 +120,38 @@ const SellerDashboard = () => {
       console.error('Error deleting dish', error);
     }
   };
+
+  const updateDishes = async(dishId: string) =>{
+    console.log(dishId);
+    try{
+      if (
+          !newDish.dishName ||
+          !newDish.dishPrice ||
+          !newDish.dishDescription ||
+          !newDish.dishType ||
+          !newDish.dishQuantity
+        ) {
+          Alert.alert('Please fill all the fields');
+          return;
+        }
+        console.log(dishId);
+        axios.put(
+          `http://192.168.1.10:8080/sellers/${dishId}/dishes`,newDish
+        ).then(res => console.log(res.data));
+      setNewDish({
+        dishName: '',
+        dishPrice: '',
+        dishDescription: '',
+        dishQuantity: '',
+        dishType: '',
+      });
+      setIsSelected(false);
+      fetchDishes();
+    }catch(error){
+      console.log(error);
+    }
+
+  }
   const renderDishes = ({item}) => {
     const isExpanded = expandedDescriptions[item._id];
     const shouldShowReadMore = showReadMore[item._id];
@@ -144,11 +180,13 @@ const SellerDashboard = () => {
               <TouchableOpacity
                 style={styles.addButton}
                 onPress={() => {
-                  deleteDish(item._id);
+                  setIsDelete(true);
                 }}>
                 <Text style={styles.addButtonText}>Delete</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.editButton}>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => handleEdit(item)}>
                 <Text style={styles.editButtonText}>Edit</Text>
               </TouchableOpacity>
             </View>
@@ -157,36 +195,59 @@ const SellerDashboard = () => {
       </View>
     );
   };
-      // const handleScroll = event => {
-      //   const scrollY = event.nativeEvent.contentOffset.y;
-      //   setShowHeaderText(scrollY > 60);
-      // };
-  useEffect(() => {
-    fetchDishes();
-  }, []);
+  const handleEdit = (dish) =>{
+    setIsSelected(true);
+    setNewDish({
+      dishName: dish.dishName,
+      dishPrice: dish.dishPrice.toString(),
+      dishDescription: dish.dishDescription,
+      dishQuantity: dish.dishQuantity.toString(),
+      dishType: dish.dishType,
+    });
+    setCuurentDishId(dish._id);
+
+  };
+useEffect(() => {
+  const fetchLoader = async () => {
+    try {
+      await fetchDishes();
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchLoader();
+}, []);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Hey, Welcome Back</Text>
-        <View style={styles.flatContainer}>
-          <View style={styles.addDishContainer}>
-            <Text style={styles.addMoreText}>Add More Dishes : </Text>
-            <TouchableOpacity
-              onPress={() => setIsAdd(true)}
-              style={styles.addDishButton}>
-              <Text style={styles.addDishText}>Add Dish</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.subheading}> AVAILABLE DISHES </Text>
-          <View style={styles.footerContainer}>
+      <View style={styles.flatContainer}>
+        <View style={styles.addDishContainer}>
+          <Text style={styles.addMoreText}>Add More Dishes : </Text>
+          <TouchableOpacity
+            onPress={() => setIsAdd(true)}
+            style={styles.addDishButton}>
+            <Text style={styles.addDishText}>Add Dish</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.subheading}> AVAILABLE DISHES </Text>
+        <View style={styles.footerContainer}>
+          {loading ? (
+            <ActivityIndicator
+              size="large"
+              color="#0000ff"
+              style={styles.loader}
+            />
+          ) : (
             <FlatList
               data={dishes}
               showsVerticalScrollIndicator={false}
               keyExtractor={item => item._id}
               renderItem={renderDishes}
             />
-          </View>
+          )}
         </View>
+      </View>
       <Modal visible={isAdd} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -235,9 +296,107 @@ const SellerDashboard = () => {
               />
             </View>
             <View style={styles.buttonContainer}>
-              <Button title="Add Dish" onPress={()=> setIsAdd(true)} />
-              <TouchableOpacity onPress={()=>setIsAdd(false)} style={styles.cancelButton}>
+              <Button
+                title="Add Dish"
+                onPress={() => {
+                  setIsAdd(true);
+                  addDish();
+                }}
+              />
+              <TouchableOpacity
+                onPress={() => setIsAdd(false)}
+                style={styles.cancelButton}>
                 <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <Modal visible={isSelected} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Update Dish</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder="Dish Name"
+                value={newDish.dishName}
+                onChangeText={value =>
+                  setNewDish({...newDish, dishName: value})
+                }
+                style={styles.input}
+              />
+              <TextInput
+                placeholder="Dish Price"
+                value={newDish.dishPrice}
+                onChangeText={value =>
+                  setNewDish({...newDish, dishPrice: value})
+                }
+                keyboardType="numeric"
+                style={styles.input}
+              />
+              <TextInput
+                placeholder="Dish Description"
+                value={newDish.dishDescription}
+                onChangeText={value =>
+                  setNewDish({...newDish, dishDescription: value})
+                }
+                style={styles.input}
+              />
+              <TextInput
+                placeholder="Dish Type"
+                value={newDish.dishType}
+                onChangeText={value =>
+                  setNewDish({...newDish, dishType: value})
+                }
+                style={styles.input}
+              />
+              <TextInput
+                placeholder="Dish Quantity"
+                value={newDish.dishQuantity}
+                onChangeText={value =>
+                  setNewDish({...newDish, dishQuantity: value})
+                }
+                style={styles.input}
+              />
+            </View>
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Update Dish"
+                onPress={() => {
+                  setIsSelected(true);
+                  updateDishes(currentDishId);
+                }}
+              />
+              <TouchableOpacity
+                onPress={() => {
+                  setIsSelected(false);
+                  setNewDish({
+                    dishName: '',
+                    dishPrice: '',
+                    dishDescription: '',
+                    dishQuantity: '',
+                    dishType: '',
+                  });
+                }}
+                style={styles.cancelButton}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <Modal visible={isDelete} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View>
+              <Text style={styles.deleteText}>Are you want to delete?</Text>
+            </View>
+            <View style={styles.DeleteContainer}>
+              <TouchableOpacity>
+                <Text>Delete</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setIsDelete(false)}>
+                <Text>Cancel</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -463,6 +622,15 @@ const styles = StyleSheet.create({
   cancelText: {
     color: 'red',
     fontSize: 16,
+  },
+  DeleteContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    // marginVertical:20,
+  },
+  deleteText: {},
+  loader:{
+    alignItems:'center',
   },
 });
 

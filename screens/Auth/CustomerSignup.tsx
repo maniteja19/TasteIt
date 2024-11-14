@@ -20,7 +20,7 @@ export default function CustomerSignup(){
     const [confirmPassword, setConfirmPassword] = useState('');
     const [verfiyConfirmPassword, setverifyConfirmPassword] = useState(false);
     const [role, setRole] = useState('customer');
-
+    const [errorMessage, setErrorMessage] = useState('');
     const navigation = useNavigation();
     const handleLogin = ()=>{
         navigation.navigate('Login');
@@ -34,18 +34,45 @@ export default function CustomerSignup(){
             email,
             phone,
             password,
-            role,
         };
-        if(!name || !email || !phone || !password){
-            Alert.alert('please fill all the fileds.');
-            return;
+        if (!name && !email && !phone && !password) {
+          setErrorMessage('Enter values in all fields.');
+          return;
+        } else if (!name) {
+          setErrorMessage('Enter your name');
+          return;
+        } else if (!email) {
+          setErrorMessage('Enter your email');
+          return;
+        } else if (!phone) {
+          setErrorMessage('Enter your phone number');
+          return;
+        } else if (!password) {
+          setErrorMessage('Enter your password');
+          return;
         }
-        if(!verifyName || !verifyEmail || !verifyPassword || !verifyPhone || !verfiyConfirmPassword){
-            Alert.alert('Please ensure all the fields are valid');
-            return;
+        if (!verifyName) {
+          setErrorMessage('name should be atleast 2 characters.');
+          return;
+        } else if (!verifyEmail) {
+          setErrorMessage('Enter valid email.');
+          return;
+        } else if (!verifyPhone) {
+            if (phone.length === 10) {
+              setErrorMessage('Enter only numbers');
+            } else {
+              setErrorMessage('Phone number should contain 10 digit.');
+            }
+          return;
+        } else if (!verifyPassword) {
+          if(password.length >= 8){
+            setErrorMessage('Password should contain letter and numbers.');
+          }
+          setErrorMessage('Password should be atleast 8 characters');
+          return;
         }
         if(password !== confirmPassword){
-          Alert.alert('confirm password doesnot match');
+          setErrorMessage('Passwords do not match');
           return;
         }
         axios
@@ -60,6 +87,7 @@ export default function CustomerSignup(){
                     setPhone('');
                     setConfirmPassword('');
                     setRole('customer');
+                    setErrorMessage('');
                     setVerifyEmail(false);
                     setVerifyName(false);
                     setverifyPassword(false);
@@ -77,6 +105,7 @@ export default function CustomerSignup(){
         const nameVar = e.nativeEvent.text;
         setName(nameVar);
         setVerifyName(false);
+        setErrorMessage('');
 
         if(nameVar.length > 1){
             setVerifyName(true);
@@ -86,6 +115,7 @@ export default function CustomerSignup(){
         const emailVar = e.nativeEvent.text;
         setEmail(emailVar);
         setVerifyEmail(false);
+        setErrorMessage('');
         if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(emailVar)){
             setVerifyEmail(true);
             setEmail(emailVar);
@@ -95,6 +125,7 @@ export default function CustomerSignup(){
         const phoneVar = e.nativeEvent.text;
         setPhone(phoneVar);
         setverifyPhone(false);
+        setErrorMessage('');
 
         if(/[6-9]{1}[0-9]{9}/.test(phoneVar)){
             setPhone(phoneVar);
@@ -105,6 +136,7 @@ export default function CustomerSignup(){
         const passwordVar = e.nativeEvent.text;
         setPassword(passwordVar);
         setverifyPassword(false);
+        setErrorMessage('');
         if(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(passwordVar)){
             setPassword(passwordVar);
             setverifyPassword(true);
@@ -113,6 +145,7 @@ export default function CustomerSignup(){
         const confirmPasswordVar = e.nativeEvent.text;
         setConfirmPassword(confirmPasswordVar);
         setverifyConfirmPassword(false);
+        setErrorMessage('');
         if(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(confirmPasswordVar)){
             setConfirmPassword(confirmPasswordVar);
             setverifyConfirmPassword(true);
@@ -121,139 +154,132 @@ export default function CustomerSignup(){
   return (
     <SafeAreaView>
       <ScrollView
-      keyboardShouldPersistTaps={'always'}
-      showsVerticalScrollIndicator = {false}
-      >
-        <View style = {styles.container}>
-          <TouchableOpacity
-              style = {styles.exitButton}
-              onPress={handleBack}>
-            <Ionicons
-              name = "arrow-back-outline"
-              size ={30}
-              color = {'black'}
-            />
+        keyboardShouldPersistTaps={'always'}
+        showsVerticalScrollIndicator={false}>
+        <View style={styles.container}>
+          <TouchableOpacity style={styles.exitButton} onPress={handleBack}>
+            <Ionicons name="arrow-back-outline" size={30} color={'black'} />
           </TouchableOpacity>
-          <View style = {styles.titleContainer}>
-            <Text style = {styles.headingText}>Create account</Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.headingText}>Create account</Text>
           </View>
-          <View style= {styles.textContainer}>
-            <Text style = {styles.heading}>Start your foodie journey with us</Text>
-            <Text style = {styles.subheading}>—sign up now!</Text>
+          <View style={styles.textContainer}>
+            <Text style={styles.heading}>
+              Start your foodie journey with us
+            </Text>
+            <Text style={styles.subheading}>—sign up now!</Text>
           </View>
           <View style={styles.loginContainer}>
-              <View style={[styles.inputContainer,styles.inputElevation]}>
-                  <FontAwesome
-                      name="user-o"
-                      color={'#428475'}
-                      style ={styles.Icon}
-                      />
-                  <TextInput
-                      placeholder="Enter name"
-                      style={styles.textInput}
-                      onChange={e=>handleName(e)}
-                      value={name}
-                    />
-              </View>
-              <View style={[styles.inputContainer,styles.inputElevation]}>
+            <View style={[styles.inputContainer, styles.inputElevation]}>
+              <FontAwesome
+                name="user-o"
+                color={'#428475'}
+                style={styles.Icon}
+              />
+              <TextInput
+                placeholder="Enter name"
+                style={styles.textInput}
+                onChange={e => handleName(e)}
+                value={name}
+              />
+            </View>
+            <View style={[styles.inputContainer, styles.inputElevation]}>
+              <Feather name="mail" color={'#428475'} style={styles.Icon} />
+              <TextInput
+                placeholder="Enter email"
+                style={styles.textInput}
+                onChange={e => handleEmail(e)}
+                value={email}
+              />
+            </View>
+            <View style={[styles.inputContainer, styles.inputElevation]}>
+              <FontAwesome name="phone" color={'#428475'} style={styles.Icon} />
+              <TextInput
+                placeholder="Enter mobile number"
+                style={styles.textInput}
+                onChange={e => handlePhone(e)}
+                maxLength={10}
+                keyboardType= "numeric"
+                value={phone}
+              />
+            </View>
+            <View style={[styles.inputContainer, styles.inputElevation]}>
+              <FontAwesome name="lock" color={'#428475'} style={styles.Icon} />
+              <TextInput
+                placeholder="Enter password"
+                style={styles.textInput}
+                secureTextEntry={secureEntry}
+                onChange={e => handlePassword(e)}
+                value={password}
+              />
+              <TouchableOpacity
+                onPress={() => {
+                  setSecureEntry(prev => !prev);
+                }}>
+                {secureEntry ? (
                   <Feather
-                      name="mail"
-                      color={'#428475'}
-                      style ={styles.Icon}
-                      />
-                  <TextInput
-                      placeholder="Enter email"
-                      style={styles.textInput}
-                      onChange={e => handleEmail(e)}
-                      value={email}/>
-              </View>
-              <View style={[styles.inputContainer,styles.inputElevation]}>
-                  <FontAwesome
-                      name="phone"
-                      color={'#428475'}
-                      style ={styles.Icon}
-                      />
-                  <TextInput
-                      placeholder="Enter mobile number"
-                      style={styles.textInput}
-                      onChange={e => handlePhone(e)}
-                      value={phone}/>
-              </View>
-              <View style={[styles.inputContainer,styles.inputElevation]}>
-                  <FontAwesome
-                      name="lock"
-                      color={'#428475'}
-                      style ={styles.Icon}
-                      />
-                  <TextInput
-                      placeholder="Enter password"
-                      style={styles.textInput}
-                      secureTextEntry={secureEntry}
-                      onChange={e => handlePassword(e)}
-                      value={password}
+                    name="eye"
+                    size={20}
+                    color={'grey'}
+                    style={styles.featherIcon}
                   />
-                  <TouchableOpacity onPress = { ()=>{
-                    setSecureEntry((prev)=>(!prev));
-                  }}>
-                    {secureEntry ? (<Feather
-                      name ="eye"
-                      size={20}
-                      color={'grey'}
-                      style={styles.featherIcon}
-                    />) : (
-                      <Feather
-                      name ="eye-off"
-                      size={20}
-                      color={'grey'}
-                      style={styles.featherIcon}
-                    />
-                    )}
-                  </TouchableOpacity>
-              </View>
-              <View style={[styles.inputContainer,styles.inputElevation]}>
-                  <FontAwesome
-                      name="lock"
-                      color={'#428475'}
-                      style ={styles.Icon}
-                      />
-                  <TextInput
-                      placeholder="Confirm password"
-                      style={styles.textInput}
-                      secureTextEntry={secureEntry}
-                      onChange={(e)=> handleConfirmPassword(e)}
-                      value={confirmPassword}
+                ) : (
+                  <Feather
+                    name="eye-off"
+                    size={20}
+                    color={'grey'}
+                    style={styles.featherIcon}
                   />
-                  <TouchableOpacity onPress = { ()=>{
-                    setSecureEntry((prev)=>(!prev));
-                  }}>
-                    {secureEntry ? (<Feather
-                      name ="eye"
-                      size={20}
-                      color={'grey'}
-                      style={styles.featherIcon}
-                    />) : (
-                      <Feather
-                      name ="eye-off"
-                      size={20}
-                      color={'grey'}
-                      style={styles.featherIcon}
-                    />
-                    )}
-                  </TouchableOpacity>
-              </View>
+                )}
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.inputContainer, styles.inputElevation]}>
+              <FontAwesome name="lock" color={'#428475'} style={styles.Icon} />
+              <TextInput
+                placeholder="Confirm password"
+                style={styles.textInput}
+                secureTextEntry={secureEntry}
+                onChange={e => handleConfirmPassword(e)}
+                value={confirmPassword}
+              />
+              <TouchableOpacity
+                onPress={() => {
+                  setSecureEntry(prev => !prev);
+                }}>
+                {secureEntry ? (
+                  <Feather
+                    name="eye"
+                    size={20}
+                    color={'grey'}
+                    style={styles.featherIcon}
+                  />
+                ) : (
+                  <Feather
+                    name="eye-off"
+                    size={20}
+                    color={'grey'}
+                    style={styles.featherIcon}
+                  />
+                )}
+              </TouchableOpacity>
+            </View>
+            {errorMessage ? (
+              <Text style={styles.errorMessage}>{errorMessage}</Text>
+            ) : null}
           </View>
-
           <View>
-                  <TouchableOpacity style={[styles.button,styles.buttonElevation]} onPress={() => handleSubmit()}>
-                      <View>
-                          <Text style={styles.buttonText}>Signup</Text>
-                      </View>
-                  </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonElevation]}
+              onPress={() => handleSubmit()}>
+              <View>
+                <Text style={styles.buttonText}>Signup</Text>
+              </View>
+            </TouchableOpacity>
           </View>
           <View style={styles.bottomText}>
             <Text style={styles.footerText}>Already have an account?</Text>
-            <TouchableOpacity  onPress={handleLogin} >
-               <Text style={styles.signupText}>  Login</Text>
+            <TouchableOpacity onPress={handleLogin}>
+              <Text style={styles.signupText}> Login</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -263,140 +289,144 @@ export default function CustomerSignup(){
 }
 
 const styles = StyleSheet.create({
-  container:{
-    display:'flex',
-    padding:20,
-    backgroundColor:'white',
+  container: {
+    display: 'flex',
+    padding: 20,
+    backgroundColor: 'white',
   },
-  picker:{
-    flex:1,
-    height:40,
-    marginLeft:10,
-    color:'black',
-    fontWeight:'bold',
+  picker: {
+    flex: 1,
+    height: 40,
+    marginLeft: 10,
+    color: 'black',
+    fontWeight: 'bold',
   },
-  titleContainer:{
-    justifyContent:'center',
-    alignItems:'center',
-    marginBottom:15,
-    marginTop:10,
+  titleContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+    marginTop: 10,
   },
-  headingText:{
-    color:'#8c61c2',
-    fontSize:32,
-    fontWeight:'bold',
+  headingText: {
+    color: '#8c61c2',
+    fontSize: 32,
+    fontWeight: 'bold',
   },
-  exitButton:{
-    backgroundColor:'grey',
-    opacity:0.3,
-    width:50,
-    height:50,
-    borderRadius:25,
-    justifyContent:'center',
-    alignItems:'center',
-
+  exitButton: {
+    backgroundColor: 'grey',
+    opacity: 0.3,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  textContainer:{
+  textContainer: {
     // justifyContent:'center',
     // alignItems:'center',
   },
-  heading:{
-    fontSize:20,
-    color:'black',
-    textAlign:'center',
-    fontWeight:'500',
+  heading: {
+    fontSize: 20,
+    color: 'black',
+    textAlign: 'center',
+    fontWeight: '500',
   },
-  subheading:{
-    color:'black',
-    fontSize:16,
-    fontWeight:'500',
-    textAlign:'right',
-    marginRight:30,
+  subheading: {
+    color: 'black',
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'right',
+    marginRight: 30,
   },
-  inputContainer:{
-    flexDirection:'row',
-    borderWidth:0,
-    alignItems:'center',
+  inputContainer: {
+    flexDirection: 'row',
+    borderWidth: 0,
+    alignItems: 'center',
     backgroundColor: '#f5f5f5',
-    borderRadius:50,
-    marginBottom:20,
-    marginHorizontal:8,
+    borderRadius: 50,
+    marginBottom: 20,
+    marginHorizontal: 8,
   },
-  Icon:{
-    fontSize:22,
-    padding:10,
+  Icon: {
+    fontSize: 22,
+    padding: 10,
   },
-  loginContainer:{
-    marginVertical:40,
+  loginContainer: {
+    marginVertical: 40,
   },
-  forgetText:{
-    color:'red',
-    fontSize:15,
-    textAlign:'right',
-    marginRight:10,
+  forgetText: {
+    color: 'red',
+    fontSize: 15,
+    textAlign: 'right',
+    marginRight: 10,
   },
-  button:{
-    backgroundColor:'#8c61c2',
-    height:40,
-    borderRadius:20,
-    alignItems:'center',
-    justifyContent:'center',
-    marginTop:-15,
-    marginHorizontal:8,
+  button: {
+    backgroundColor: '#8c61c2',
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -15,
+    marginHorizontal: 8,
   },
-  buttonText:{
-    fontSize:24,
-    color:'white',
+  buttonText: {
+    fontSize: 24,
+    color: 'white',
   },
-  inputElevation:{
-    backgroundColor:'white',
+  inputElevation: {
+    backgroundColor: 'white',
     elevation: 5,
     shadowOffset: {
-        width: 2,
-        height:4,
+      width: 2,
+      height: 4,
     },
     shadowColor: '#000',
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
-  buttonElevation:{
-    backgroundColor:'#8c61c2',
+  buttonElevation: {
+    backgroundColor: '#8c61c2',
     elevation: 5,
     shadowOffset: {
-        width: 2,
-        height:4,
+      width: 2,
+      height: 4,
     },
     shadowColor: '#8c61c2',
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
-  image:{
-    height:250,
-    width:350,
-    marginTop:15,
-    marginBottom:-12,
+  image: {
+    height: 250,
+    width: 350,
+    marginTop: 15,
+    marginBottom: -12,
   },
-  bottomText:{
-    flexDirection:'row',
-    alignItems:'center',
-    justifyContent:'center',
-    marginTop:12,
+  bottomText: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
   },
-  signupText:{
-    color:'blue',
-    fontSize:15,
+  signupText: {
+    color: 'blue',
+    fontSize: 15,
   },
-  footerText:{
-    color:'black',
+  footerText: {
+    color: 'black',
   },
   textInput: {
     flex: 1,
     height: 40,
     fontSize: 16,
     color: '#000',
-    marginRight:20,
+    marginRight: 20,
   },
-  featherIcon:{
-    paddingRight:13,
+  featherIcon: {
+    paddingRight: 13,
+  },
+  errorMessage: {
+    color: 'red',
+    fontSize: 17,
+    textAlign: 'center',
   },
 });

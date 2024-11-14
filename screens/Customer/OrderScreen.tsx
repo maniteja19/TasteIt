@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Alert,
   Modal,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,7 +30,8 @@ const PreviouslyOrderedItemsScreen = () => {
   const [comments, setComments] = useState('');
   const [modalParameter, setModalParameter] = useState(null);
   const [totalComments, setTotalComments] = useState([]);
-
+  const [orderId, setOrderId] = useState('');
+  const [loading,setLoading] = useState(true);
       // const addBasket = async (dishId: string, sellerId: string, price) => {
       //   const token = await AsyncStorage.getItem('token');
       //   const userId = await AsyncStorage.getItem('userId');
@@ -77,6 +79,16 @@ const PreviouslyOrderedItemsScreen = () => {
        getComments();
      }, []),
    );
+   useEffect(() => {
+     const fetchOrders = async () => {
+       try {
+         await fetchPreviousOrders();
+       } finally {
+         setLoading(false);
+       }
+     };
+     fetchOrders();
+   }, []);
    const submitRating = async (orderId) => {
 
     console.log(orderId);
@@ -184,6 +196,7 @@ const getRatingsByOrderId = orderId => {
                 onPress={() => {
                   setModalParameter(item._id);
                   setModalVisible(true);
+                  setOrderId(item._id);
                 }}>
                 <Text style={styles.feedbackText}>
                   Share rating and feedback
@@ -200,64 +213,6 @@ const getRatingsByOrderId = orderId => {
             </Text>
           </TouchableOpacity>
         </View>
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => setModalVisible(false)}>
-          <View style={styles.overlay}>
-            <View style={styles.modalContainer}>
-              <View style={styles.innerRatingContainer}>
-                <Text style={styles.ratingText}>Rate:</Text>
-                <Text> {renderRatingStars()}</Text>
-              </View>
-              <TextInput
-                style={styles.feedbackInput}
-                placeholder="Leave a feedback..."
-                value={feedback}
-                onChangeText={setFeedback}
-                editable={!isSubmitted}
-                multiline={true}
-                numberOfLines={4}
-                textAlignVertical="top"
-              />
-              {errorMessage ? (
-                <Text style={styles.errorMessageText}>{errorMessage}</Text>
-              ) : (
-                ''
-              )}
-              <View style={styles.footerContainer}>
-                <TouchableOpacity
-                  style={styles.submitButton}
-                  onPress={() => {
-                    if (rating === 0) {
-                      setErrorMessage('Please provide rating.');
-                    } else {
-                      submitRating(modalParameter);
-                      setRating(0);
-                      setFeedback('');
-                      setModalVisible(false);
-                      setErrorMessage('');
-                    }
-                  }}
-                  disabled={isSubmitted}>
-                  <Text style={styles.submitButtonText}>
-                    {isSubmitted ? 'Submitted' : 'Submit'}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => {
-                    setModalVisible(false);
-                    setRating(0);
-                    setFeedback('');
-                  }}
-                  style={styles.cancelButton}>
-                  <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
       </View>
     );
 };
@@ -265,7 +220,9 @@ const getRatingsByOrderId = orderId => {
   return (
     <View style={styles.container}>
       <Text style={styles.screenHeader}>Previous Orders</Text>
-      {orders.length > 0 ? (
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
+      ) : orders.length > 0 ? (
         <FlatList
           data={[...orders].reverse()}
           keyExtractor={item => item._id}
@@ -277,6 +234,64 @@ const getRatingsByOrderId = orderId => {
           <Text style={styles.EmptyText}>Yet to order</Text>
         </View>
       )}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}>
+        <View style={styles.overlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.innerRatingContainer}>
+              <Text style={styles.ratingText}>Rate:</Text>
+              <Text> {renderRatingStars()}</Text>
+            </View>
+            <TextInput
+              style={styles.feedbackInput}
+              placeholder="Leave a feedback..."
+              value={feedback}
+              onChangeText={setFeedback}
+              editable={!isSubmitted}
+              multiline={true}
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+            {errorMessage ? (
+              <Text style={styles.errorMessageText}>{errorMessage}</Text>
+            ) : (
+              ''
+            )}
+            <View style={styles.footerContainer}>
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={() => {
+                  if (rating === 0) {
+                    setErrorMessage('Please provide rating.');
+                  } else {
+                    submitRating(modalParameter);
+                    setRating(0);
+                    setFeedback('');
+                    setModalVisible(false);
+                    setErrorMessage('');
+                  }
+                }}
+                disabled={isSubmitted}>
+                <Text style={styles.submitButtonText}>
+                  {isSubmitted ? 'Submitted' : 'Submit'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setRating(0);
+                  setFeedback('');
+                  setModalVisible(false);
+                }}
+                style={styles.cancelButton}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -476,7 +491,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'grey',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },

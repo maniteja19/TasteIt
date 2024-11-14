@@ -1,5 +1,5 @@
-import {FlatList, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import React, {useCallback, useState} from 'react';
+import {ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {useCallback, useEffect, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import {useFocusEffect} from '@react-navigation/native';
@@ -7,7 +7,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Material from 'react-native-vector-icons/MaterialCommunityIcons';
 export default function FavouritesScreen() {
   const [favourites, setFavourites] = useState([]);
-
+  const [loading, setLoading] = useState(true);
   const getFavourites = async () => {
     const userId = await AsyncStorage.getItem('userId');
     try {
@@ -43,11 +43,23 @@ export default function FavouritesScreen() {
       getFavourites();
     }, []),
   );
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        await getFavourites();
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
 
   return (
     <View style={styles.screen}>
       <Text style={styles.heading}>Favourite List</Text>
-      {favourites.length > 0 ? (
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
+      ) : favourites.length > 0 ? (
         <FlatList
           data={favourites}
           keyExtractor={item => item._id}

@@ -1,11 +1,11 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
   FlatList,
   StyleSheet,
   TouchableOpacity,
-  Image,
+  ActivityIndicator,
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,8 +16,7 @@ import {format} from 'date-fns';
 
 const OrderedDishesScreen = () => {
   const [orders, setOrders] = useState([]);
-  const [rating, setRating] = useState(0);
-  const [totalComments, setTotalComments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const getOrderedDishes = async () => {
     const token = await AsyncStorage.getItem('token');
@@ -30,31 +29,17 @@ const OrderedDishesScreen = () => {
       console.error('Error fetching previous orders', error);
     }
   };
-  useFocusEffect(
-    React.useCallback(() => {
-      getOrderedDishes();
-    }, []),
-  );
-  const getRatingsByOrderId = orderId => {
-    return totalComments
-      .filter(order => order.orderId === orderId)
-      .map(order => order.rating);
+useEffect(() => {
+  const fetchOrders = async () => {
+    try {
+      await getOrderedDishes();
+    } finally {
+      setLoading(false);
+    }
   };
-  const renderRatingStars = () => {
-    return (
-      <View style={styles.starContainer}>
-        {[1, 2, 3, 4, 5].map(star => (
-          <TouchableOpacity key={star} onPress={() => setRating(star)}>
-            <Material
-              name={star <= rating ? 'star' : 'star-outline'}
-              size={24}
-              color="#e32222"
-            />
-          </TouchableOpacity>
-        ))}
-      </View>
-    );
-  };
+  fetchOrders();
+}, []);
+
   const renderDish = ({item}) => (
     <View style={styles.dishContainer}>
       <View style={styles.dishDetails}>
@@ -63,7 +48,6 @@ const OrderedDishesScreen = () => {
       </View>
     </View>
   );
-
   const renderOrder = ({item}) => {
     return (
       <View style={styles.orderContainer}>
@@ -98,11 +82,13 @@ const OrderedDishesScreen = () => {
       </View>
     );
   };
-
   return (
     <View style={styles.container}>
       <Text style={styles.screenHeader}>Ordered Dishes</Text>
-      {orders.length > 0 ? (
+      {loading ? (
+      <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
+    ) :
+      orders.length > 0 ? (
         <FlatList
           data={[...orders].reverse()}
           keyExtractor={item => item._id}
@@ -174,7 +160,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: 'black',
     fontFamily: '	Arial',
-    marginBottom:4,
+    marginBottom: 4,
   },
   sellerLocation: {
     fontSize: 14,
@@ -226,6 +212,11 @@ const styles = StyleSheet.create({
 
   starContainer: {
     flexDirection: 'row',
+  },
+  loader:{
+    flex:1,
+    justifyContent:'center',
+    alignItems:'center',
   },
 });
 

@@ -1,5 +1,5 @@
-import {FlatList, SafeAreaView, StyleSheet, Text, View} from 'react-native';
-import React, {useCallback, useState} from 'react';
+import {ActivityIndicator, FlatList, SafeAreaView, StyleSheet, Text, View} from 'react-native';
+import React, {useCallback, useEffect, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import {useFocusEffect} from '@react-navigation/native';
@@ -8,6 +8,7 @@ export default function RestaurantInsightsScreen() {
   const [totalLikes, setTotalLikes] = useState(0);
   const [averageRating, setAverageRating] = useState(0);
   const [customerFeedback, setCustomerFeedback] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchRestaurantDetails = async () => {
     const token = await AsyncStorage.getItem('token');
@@ -35,6 +36,16 @@ export default function RestaurantInsightsScreen() {
     }, []),
   );
 
+  useEffect(() => {
+    const fetchLoader = async () => {
+      try {
+        await fetchCustomerFeedback();
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLoader();
+  }, []);
   const fetchCustomerFeedback = async () => {
     const userId = await AsyncStorage.getItem('userId');
     try {
@@ -79,16 +90,22 @@ export default function RestaurantInsightsScreen() {
           <View style={styles.line} />
         </View>
         <View style={styles.feedbackContainer}>
-            {customerFeedback.length>0 ? (
-                <FlatList
-            data={customerFeedback}
-            renderItem={renderFeedbackItem}
-            keyExtractor={item => item.orderId}
-            showsVerticalScrollIndicator={false}
-          />
-            ) : (
-                <Text style ={styles.emptyText}>No Feedbacks available</Text>
-            )}
+          {loading ? (
+            <ActivityIndicator
+              size="large"
+              color="#0000ff"
+              style={styles.loader}
+            />
+          ) : customerFeedback.length > 0 ? (
+            <FlatList
+              data={customerFeedback}
+              renderItem={renderFeedbackItem}
+              keyExtractor={item => item.orderId}
+              showsVerticalScrollIndicator={false}
+            />
+          ) : (
+            <Text style={styles.emptyText}>No Feedbacks available</Text>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -199,4 +216,7 @@ const styles = StyleSheet.create({
     fontSize:16,
     color:'grey',
   },
+loader:{
+  alignItems:'center',
+}
 });

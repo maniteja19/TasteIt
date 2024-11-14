@@ -5,6 +5,7 @@ import {
   StatusBar,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -23,6 +24,7 @@ const HomeScreen = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [favourites, setFavourites] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const handleSearch = query => {
     setSearchQuery(query);
@@ -82,18 +84,23 @@ const HomeScreen = () => {
     }
   };
   useEffect(() => {
-    // getFavourites();
-    allRestaurants();
+    const fetchLoader = async () => {
+      setLoading(true);
+      await allRestaurants();
+      await getFavourites();
+      setLoading(false);
+    };
+    fetchLoader();
   }, []);
   useFocusEffect(
     useCallback(()=>{
       getFavourites();
     })
-  )
+  );
   const removeFromFavourite = async (restaurantId:string) => {
     try{
       const userId = await AsyncStorage.getItem('userId');
-      const response = await axios.post(
+      await axios.post(
         'http://192.168.1.10:8080/favorites',
         {
           userId,
@@ -176,7 +183,14 @@ const HomeScreen = () => {
           />
         )}
       </View>
-      { !isSearching && searchQuery === '' ? (
+      {loading ? (
+            <ActivityIndicator
+              size="large"
+              color="#0000ff"
+              style={styles.loader}
+            />
+          ) :(
+        // !isSearching && searchQuery === '' ? (
         <FlatList
           data={filteredData}
           renderItem={renderUser}
@@ -225,14 +239,14 @@ const HomeScreen = () => {
             </View>
           }
         />
-      ) : (
-        <FlatList
-          data={filteredData}
-          renderItem={renderUser}
-          keyExtractor={item => item._id}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
+      // ) : (
+      //   <FlatList
+      //     data={filteredData}
+      //     renderItem={renderUser}
+      //     keyExtractor={item => item._id}
+      //     contentContainerStyle={styles.listContainer}
+      //     showsVerticalScrollIndicator={false}
+      //   />
       )}
     </SafeAreaView>
   );
@@ -325,6 +339,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#333',
     fontWeight: 'bold',
+  },
+  loader:{
+    alignItems:'center',
   },
 });
 
