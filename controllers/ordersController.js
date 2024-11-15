@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Orders = require('../models/Orders')
 const Seller = require('../models/Seller');
+const dishes = require('../models/Dishes');
 const bookOrders = async (req,res) =>{
     const {basket,grandTotal} = req.body;
     try{
@@ -10,7 +11,18 @@ const bookOrders = async (req,res) =>{
             total:grandTotal,
             items:basket.items,
         })
-        
+        const numberOfItems = basket.items.length;
+        for(let i = 0;i<numberOfItems;i++){
+          let dishId = basket.items[i].dish._id;
+          console.log(dishId);
+          let dish = await dishes.findById(dishId);
+          if(!dish){
+            res.status(404).json({message:"dish not available"});
+          }
+          console.log(dish);
+          dish.dishQuantity = dish.dishQuantity - basket.items[i].quantity;
+          await dish.save();    
+        }
         await newOrder.save();
     }
     catch(error){

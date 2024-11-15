@@ -90,7 +90,7 @@ const addDishes = async(req,res) =>{
 const getDishes = async(req,res) =>{
     const { id } = req.params;
     try {
-        const seller = await Seller.findOne({_id:id}).populate('dishes');       
+        const seller = await Seller.findOne({_id:id}).populate('dishes');  
         if (!seller) {
         return res.status(404).json({ message: 'Seller not found' });
         }

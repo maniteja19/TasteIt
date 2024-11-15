@@ -8,6 +8,7 @@ const dishesScheme = new mongoose.Schema({
     dishQuantity:{
         type: Number,
         required:true,
+        min: [1, 'Quantity must be at least 1'],
     },
     dishPrice:{
         type: Number,

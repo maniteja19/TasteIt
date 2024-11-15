@@ -43,7 +43,7 @@ const getFavourites = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const user = await User.findOne({ _id: id })//.populate('favourites'); // Populate the favourites field
+    const user = await User.findOne({ _id: id })
     if (!user) {
       return res.status(400).send({ message: "User not found" });
     }
@@ -67,6 +67,7 @@ const removeFavorites = async (req, res) => {
     );
     const seller = await Seller.findOne({_id:restaurantId});
     seller.count = seller.count-1;
+    await seller.save();
     res.status(204).json({ status: 'ok', message: 'Successfully removed from favourites' });
   } catch (error) {
     res.status(500).json({ status: 'failed', message: error.message });
