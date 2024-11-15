@@ -6,7 +6,6 @@ import AuthNavigation from './navigation/AuthNavigation';
 import SellerNavigation from './navigation/SellerNavigation';
 import AdminNavigation from './navigation/AdminNavigation';
 import DishNavigation from './navigation/DishNavigation';
-
 const Stack = createNativeStackNavigator();
 function App(){
   return(
@@ -20,7 +19,6 @@ function App(){
         <Stack.Screen name = "Admin" component={AdminNavigation}/>
        </Stack.Navigator>
       </NavigationContainer>
-      // <OrderedDishesScreen/>
   );
 }
 

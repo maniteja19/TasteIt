@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Modal,
+  Alert,
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -17,7 +18,7 @@ const BasketScreen = () => {
   const [basket, setBasket] = useState(null);
   const [totalPrice, setTotalPrice] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
-
+  const [available, setAvailable] = useState(false);
   const handleHome = () => navigation.navigate('Home');
 
   const fetchBasket = async () => {
@@ -53,12 +54,16 @@ const BasketScreen = () => {
       if (quantity === 0) {
         removeItem(dishId);
       }
-      await axios.put('http://192.168.1.10:8080/basket/update', {
+      const response = await axios.put('http://192.168.1.10:8080/basket/update', {
         dishId,
         quantity,
         userId,
         price,
       });
+      if(response.data.message){
+        Alert.alert("item out of stock");
+        setAvailable(true);
+      }
       fetchBasket();
     } catch (error) {
       console.error(error);
@@ -137,16 +142,17 @@ const BasketScreen = () => {
                       <Text style={styles.adjustButton}>-</Text>
                     </TouchableOpacity>
                     <Text style={styles.quantityText}>{item.quantity}</Text>
-                    <TouchableOpacity
-                      onPress={() =>
-                        updateQuantity(
-                          item.dish._id,
-                          item.quantity + 1,
-                          item.dish.dishPrice,
-                        )
-                      }>
-                      <Text style={styles.adjustButton}>+</Text>
-                    </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() =>
+                          updateQuantity(
+                            item.dish._id,
+                            item.quantity + 1,
+                            item.dish.dishPrice,
+                          )
+                        }
+                        >
+                        <Text style={styles.adjustButton}>+</Text>
+                      </TouchableOpacity>
                   </View>
                   <TouchableOpacity
                     onPress={() => removeItem(item.dish._id)}
@@ -158,10 +164,6 @@ const BasketScreen = () => {
             )}
             ListFooterComponent={
               <View style={styles.footerContainer}>
-                <Text style={styles.addressText}>Delivery Address:</Text>
-                <Text style={styles.addressDetails}>
-                  123 Foodie St, Flavor Town
-                </Text>
                 <Text style={styles.summaryText}>Order Summary</Text>
                 <Text style={styles.summaryItem}>
                   Total Price: ₹{totalPrice.toFixed(2)}
@@ -186,7 +188,7 @@ const BasketScreen = () => {
                   <Text style={styles.buttonText}>
                     ₹{totalPrice.toFixed(2)}
                   </Text>
-                  <Text>Total</Text>
+                  <Text style={styles.totalText}>Total</Text>
                 </View>
                 <Text style={styles.buttonText}>Place Order</Text>
               </View>
@@ -310,7 +312,7 @@ const styles = StyleSheet.create({
   placeOrderButton: {
     flex: 0.7,
     backgroundColor: '#e32222',
-    paddingVertical: 14,
+    paddingVertical: 10,
     borderRadius: 10,
   },
   PlacePriceContainer: {
@@ -318,7 +320,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginHorizontal: 12,
-  },
+    },
   DeliveryButton: {
     flex: 0.3,
   },
@@ -355,7 +357,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '85%',
-    height:400,
+    height: 400,
     padding: 25,
     backgroundColor: 'white',
     borderRadius: 15,
@@ -382,6 +384,12 @@ const styles = StyleSheet.create({
   primaryButtonText: {color: 'white', fontWeight: '600', fontSize: 18},
   secondaryButton: {paddingVertical: 8, paddingHorizontal: 30},
   secondaryButtonText: {color: '#007bff', fontWeight: '600', fontSize: 16},
+  totalText:{
+    color:'white',
+    fontSize:16,
+    textAlign:'center',
+    fontWeight:'600',
+  }
 });
 
 export default BasketScreen;

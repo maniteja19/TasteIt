@@ -1,4 +1,4 @@
-import { Alert, FlatList, StyleSheet, Text,TouchableOpacity,View } from 'react-native';
+import { Alert, FlatList, Modal, StyleSheet, Text,TouchableOpacity,View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import axios from 'axios';
@@ -25,7 +25,7 @@ export default function ViewDishes() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredData, setFilteredData] = useState([]);
-
+  const [isVisible, setIsVisible] = useState(false);
     const handleExit = () =>{
       setIsSearching(false);
       setSearchQuery('');
@@ -66,22 +66,24 @@ export default function ViewDishes() {
     const addToBasket = async (
       dishId: string,
       sellerId: string,
-      price,
+      price:Number,
     ) => {
       const token = await AsyncStorage.getItem('token');
       const userId = await AsyncStorage.getItem('userId');
       try {
-        await axios
+        const response = await axios
           .post(
             'http://192.168.1.10:8080/basket/add',
             {userId, dishId, sellerId, quantity: 1, price},
             {headers: {Authorization: `Bearer ${token}`}},
-          )
-          .then(res => console.log(res.data));
-        Alert.alert(
-          'Added to Basket',
-          'Dish has been added to your basket.',
-        );
+          );
+          console.log(userId, dishId);
+        if(response.data.message === "cannot be added"){
+          setIsVisible(true);
+        }
+        else{
+          Alert.alert('Added to Basket', 'Dish has been added to your basket.');
+        }
       } catch (error) {
         console.error('error', error);
       }
@@ -117,118 +119,135 @@ export default function ViewDishes() {
                 <Text
                   style={styles.itemDescription}
                   numberOfLines={isExpanded ? undefined : 3}
-                  onTextLayout={(event) => onTextLayout(item._id, event)}
-                >
+                  onTextLayout={event => onTextLayout(item._id, event)}>
                   {item.dishDescription}
                 </Text>
                 {shouldShowReadMore && (
-                  <TouchableOpacity
-                    onPress={() => toggleDescription(item._id)}>
+                  <TouchableOpacity onPress={() => toggleDescription(item._id)}>
                     <Text style={styles.readMoreText}>
                       {isExpanded ? 'Show Less' : 'Read More'}
                     </Text>
                   </TouchableOpacity>
                 )}
               </View>
-              <View>
-                <TouchableOpacity
-                  style={styles.addButton}
-                  onPress={() => {
-                    addToBasket(item._id, item.seller, item.dishPrice);
-                  }}>
-                  <Text style={styles.addButtonText}>ADD</Text>
-                </TouchableOpacity>
-              </View>
+              {item.dishQuantity === 0 ? (
+                <View>
+                  <Text>Out of Stock</Text>
+                </View>
+              ) : (
+                <View>
+                  <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={() => {
+                      addToBasket(item._id, item.seller, item.dishPrice);
+                    }}>
+                    <Text style={styles.addButtonText}>ADD</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           </View>
         </View>
       );
     };
 
-    const handleScroll = (event) => {
-      const scrollY = event.nativeEvent.contentOffset.y;
-      setShowHeaderText(scrollY > 60);
-    };
-
   return (
-    <View >
-        {isSearching ? (
-          <Searchbar
-            placeholder="Search for Dishes"
-            onChangeText={handleSearch}
-            value={searchQuery}
-            style={styles.searchbar}
-            inputStyle={styles.searchbarInput}
-            // eslint-disable-next-line react/no-unstable-nested-components
-            icon={() => (
-              <Ionicons
-                name="chevron-back-outline"
-                size={30}
-                color={'black'}
-                onPress={handleExit}
-              />
-            )}
-            iconColor="grey"
-          />
-        ) : (
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => handleBack()}>
-              <Ionicons name="chevron-back" size={30} color={'black'} />
-            </TouchableOpacity>
-            {showHeaderText && (
-              <Text style={styles.headerTitle}>
-                {route.params?.restaurantName}
-              </Text>
-            )}
+    <View>
+      {isSearching ? (
+        <Searchbar
+          placeholder="Search for Dishes"
+          onChangeText={handleSearch}
+          value={searchQuery}
+          style={styles.searchbar}
+          inputStyle={styles.searchbarInput}
+          // eslint-disable-next-line react/no-unstable-nested-components
+          icon={() => (
             <Ionicons
-              name="search"
+              name="chevron-back-outline"
               size={30}
               color={'black'}
-              onPress={() => setIsSearching(true)}
-              style={styles.searchIcon}
+              onPress={handleExit}
             />
-          </View>
-        )}
-      { !isSearching && searchQuery === '' ? (
-        <FlatList
-        data={dishes}
-        showsVerticalScrollIndicator={false}
-        keyExtractor={item => item._id}
-        renderItem={renderDishes}
-        onScroll={handleScroll}
-        ListHeaderComponent={
-          <>
-            <View style={styles.restaurantContainer}>
-              <View>
-                <Text style={styles.restaurantName}>
-                  {route.params?.restaurantName}
-                </Text>
-                <Text style={styles.Location}>
-                  {route.params?.address} . Free delivery
-                </Text>
-              </View>
-              <View style={styles.ratingContainer}>
-                <Text style={styles.itemRating}>
-                  ⭐ 3.5 {/* ⭐ {item.rating} ({item.ratingsCount}) */}
-                </Text>
-              </View>
-              {/* <Text style={styles.offers}>{dummyData.offers}</Text> */}
-            </View>
-            <Text style={styles.headingText}>
-              ----------Recommended for you----------
+          )}
+          iconColor="grey"
+        />
+      ) : (
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => handleBack()}>
+            <Ionicons name="chevron-back" size={30} color={'black'} />
+          </TouchableOpacity>
+          {showHeaderText && (
+            <Text style={styles.headerTitle}>
+              {route.params?.restaurantName}
             </Text>
-          </>
-        }
-      />
+          )}
+          <Ionicons
+            name="search"
+            size={30}
+            color={'black'}
+            onPress={() => setIsSearching(true)}
+            style={styles.searchIcon}
+          />
+        </View>
+      )}
+      {!isSearching && searchQuery === '' ? (
+        <FlatList
+          data={dishes}
+          showsVerticalScrollIndicator={false}
+          keyExtractor={item => item._id}
+          renderItem={renderDishes}
+          ListHeaderComponent={
+            <>
+              <View style={styles.restaurantContainer}>
+                <View>
+                  <Text style={styles.restaurantName}>
+                    {route.params?.restaurantName}
+                  </Text>
+                  <Text style={styles.Location}>
+                    {route.params?.address} . Free delivery
+                  </Text>
+                </View>
+                <View style={styles.ratingContainer}>
+                  <Text style={styles.itemRating}>
+                    ⭐ 3.5 {/* ⭐ {item.rating} ({item.ratingsCount}) */}
+                  </Text>
+                </View>
+                {/* <Text style={styles.offers}>{dummyData.offers}</Text> */}
+              </View>
+              <Text style={styles.headingText}>
+                ----------Recommended for you----------
+              </Text>
+            </>
+          }
+        />
       ) : (
         <FlatList
-        data={filteredData}
-        showsVerticalScrollIndicator={false}
-        keyExtractor={item => item._id}
-        renderItem={renderDishes}
-        onScroll={handleScroll}
+          data={filteredData}
+          showsVerticalScrollIndicator={false}
+          keyExtractor={item => item._id}
+          renderItem={renderDishes}
         />
       )}
+      <Modal visible={isVisible} transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.headerContainer}>
+              <Text style={styles.headerText}>
+                You have items from another restaurant in your basket. Would you
+                like to clear your basket and add this new dish?
+              </Text>
+            </View>
+            <View style={styles.footerContainer}>
+              <TouchableOpacity style={styles.buttonOne} onPress={() => setIsVisible(false)}>
+                <Text style={styles.buttonText}>No, thanks!</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.buttonTwo} onPress={() => replace()}>
+                <Text style={styles.buttonText}>Replace</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -350,7 +369,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#121111',
-    flex: 1, // Allow text to take available space
+    flex: 1,
   },
 
   buttonContainer: {
@@ -384,6 +403,61 @@ const styles = StyleSheet.create({
   searchIcon: {
     alignSelf: 'flex-start',
   },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: '85%',
+    height: '200',
+    padding: 25,
+    backgroundColor: 'white',
+    borderRadius: 15,
+    alignItems: 'center',
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 10,
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    marginTop: 10,
+    justifyContent: 'space-between',
+  },
+  buttonOne: {
+    flex: 0.5,
+    backgroundColor: 'grey',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    borderRadius: 8,
+  },
+  buttonTwo: {
+    flex: 0.5,
+    backgroundColor: '#ebd7d5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+    marginHorizontal: 20,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  headerContainer:{
+    
+  },
+  headerText:{
+    fontSize:20,
+    fontFamily:'Arial',
+  }
 });
 
 

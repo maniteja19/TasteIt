@@ -185,58 +185,101 @@
 
 // export default App;
 
-import React, {useState} from 'react';
-import {Modal, View, Text, Button, StyleSheet} from 'react-native';
+// import React, {useState} from 'react';
+// import {Modal, View, Text, Button, StyleSheet} from 'react-native';
 
 
-const MyComponent = () => {
-  const [modalVisible, setModalVisible] = useState(false);
+// const MyComponent = () => {
+//   const [modalVisible, setModalVisible] = useState(false);
+
+//   return (
+//     <View style={styles.container}>
+//       <Button title="Open Modal" onPress={() => setModalVisible(true)} />
+
+//       <Modal
+//         animationType="slide"
+//         transparent={true}
+//         visible={modalVisible}
+//         onRequestClose={() => setModalVisible(false)} // For Android back button
+//       >
+//         <View style={styles.modalContainer}>
+//           <View style={styles.modalContent}>
+//             <Text style={styles.modalText}>This is a modal!</Text>
+//             <Button
+//               title="Close Modal"
+//               onPress={() => setModalVisible(false)}
+//             />
+//           </View>
+//         </View>
+//       </Modal>
+//     </View>
+//   );
+// };
+// module.exports = MyComponent;
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//   },
+//   modalContainer: {
+//     flex: 1,
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dark overlay
+//   },
+//   modalContent: {
+//     width: 300,
+//     padding: 20,
+//     backgroundColor: 'white',
+//     borderRadius: 10,
+//     alignItems: 'center',
+//   },
+//   modalText: {
+//     marginBottom: 15,
+//     textAlign: 'center',
+//   },
+// });
+
+import React, {useState, useEffect} from 'react';
+import {FlatList, Text, View, ActivityIndicator} from 'react-native';
+
+const LazyLoadingList = () => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    fetchData();
+  }, [page]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    // Simulate an API call
+    const newData = Array.from({length: 10}, (_, index) => ({
+      id: index + page * 100,
+      text: `Item ${index + page * 10}`,
+    }));
+    setData(prevData => [...prevData, ...newData]);
+    setLoading(false);
+  };
+
+  const loadMore = () => {
+    setPage(prevPage => prevPage + 1);
+  };
 
   return (
-    <View style={styles.container}>
-      <Button title="Open Modal" onPress={() => setModalVisible(true)} />
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)} // For Android back button
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalText}>This is a modal!</Text>
-            <Button
-              title="Close Modal"
-              onPress={() => setModalVisible(false)}
-            />
-          </View>
-        </View>
-      </Modal>
-    </View>
+    <FlatList
+      data={data}
+      keyExtractor={item => item.id.toString()}
+      renderItem={({item}) => <Text>{item.text}</Text>}
+      onEndReached={loadMore}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={
+        loading && <ActivityIndicator size="small" color="#0000ff" />
+      }
+    />
   );
 };
-module.exports = MyComponent;
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dark overlay
-  },
-  modalContent: {
-    width: 300,
-    padding: 20,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  modalText: {
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-});
+
+export default LazyLoadingList;
