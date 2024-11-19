@@ -89,9 +89,10 @@ export default function SellerProfileScreen() {
             <TouchableOpacity style={styles.edit} onPress={selectImage}>
                 <MaterialIcon
                   name="account-edit-outline"
-                  size={40}
-                  color={'black'}
+                  size={25}
+                  color={'white'}
                 />
+                <Text style ={{color:"white",fontSize:18,}}> Edit Profile</Text>
             </TouchableOpacity>
           </View>
           <View>
@@ -186,9 +187,14 @@ const styles = StyleSheet.create({
   edit: {
     position: 'absolute',
     margin: 'auto',
-    top: 0,
-    bottom: 0,
-    right: 20,
+    top: '90%',
+    bottom: '0%',
+    right: '3%',
+    backgroundColor:'black',
+    borderRadius:4,
+    padding:5,
+    flexDirection:'row',
+    borderBottomRightRadius:10,
   },
   inputContainer: {
     borderWidth: 1,

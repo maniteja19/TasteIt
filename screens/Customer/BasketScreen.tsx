@@ -18,7 +18,6 @@ const BasketScreen = () => {
   const [basket, setBasket] = useState(null);
   const [totalPrice, setTotalPrice] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
-  const [available, setAvailable] = useState(false);
   const handleHome = () => navigation.navigate('Home');
 
   const fetchBasket = async () => {
@@ -61,8 +60,7 @@ const BasketScreen = () => {
         price,
       });
       if(response.data.message){
-        Alert.alert("item out of stock");
-        setAvailable(true);
+        Alert.alert('item out of stock');
       }
       fetchBasket();
     } catch (error) {

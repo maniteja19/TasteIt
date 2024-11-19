@@ -43,7 +43,7 @@ const SellerDashboard = () => {
     dishType: '',
   });
   const [isSelected, setIsSelected] = useState(false);
-  const [isDelete, setIsDelete] = useState(false);
+  const [isDelete, setIsDelete] = useState(null);
   const [currentDishId, setCuurentDishId] = useState('');
   const [expandedDescriptions, setExpandedDescriptions] = useState<{
     [key: string]: boolean;
@@ -116,6 +116,7 @@ const SellerDashboard = () => {
         `http://192.168.1.10:8080/sellers/${sellerId}/dishes/${dishId}`,
       );
       setDishes(dishes.filter(dish => dish._id !== dishId));
+      setIsDelete(null);
     } catch (error) {
       console.error('Error deleting dish', error);
     }
@@ -180,7 +181,7 @@ const SellerDashboard = () => {
               <TouchableOpacity
                 style={styles.addButton}
                 onPress={() => {
-                  setIsDelete(true);
+                  setIsDelete(item._id);
                 }}>
                 <Text style={styles.addButtonText}>Delete</Text>
               </TouchableOpacity>
@@ -385,17 +386,17 @@ useEffect(() => {
           </View>
         </View>
       </Modal>
-      <Modal visible={isDelete} transparent animationType="slide">
+      <Modal visible={isDelete !== null} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View>
               <Text style={styles.deleteText}>Are you want to delete?</Text>
             </View>
             <View style={styles.DeleteContainer}>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => deleteDish(isDelete || 'ok')} >
                 <Text>Delete</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setIsDelete(false)}>
+              <TouchableOpacity onPress={() => setIsDelete(null)}>
                 <Text>Cancel</Text>
               </TouchableOpacity>
             </View>

@@ -18,6 +18,7 @@ interface Dish {
 export default function ViewDishes() {
   const navigation = useNavigation();
   const route = useRoute();
+
   const [showHeaderText, setShowHeaderText] = useState(false);
   const [expandedDescriptions, setExpandedDescriptions] = useState<{[key: string]: boolean;}>({});
   const [showReadMore, setShowReadMore] = useState<{[key: string]: boolean}>({});
@@ -26,6 +27,11 @@ export default function ViewDishes() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredData, setFilteredData] = useState([]);
   const [isVisible, setIsVisible] = useState(false);
+  const [basket, setBasket] = useState(null);
+  const [itemDetails, setItemDetails] = useState({});
+  const [averageRating, setAverageRating] = useState(0);
+  const [isCartButton, setIsCartButton] = useState(false);
+
     const handleExit = () =>{
       setIsSearching(false);
       setSearchQuery('');
@@ -48,8 +54,19 @@ export default function ViewDishes() {
     };
     useEffect(() => {
       fetchDishes();
-    }, []);
-
+      fetchCustomerFeedback();
+    });
+  const fetchCustomerFeedback = async () => {
+    const userId = route.params?._id;
+    try {
+      const response = await axios(
+        `http://192.168.1.10:8080/feedback/${userId}`,
+      );
+      setAverageRating(response.data.rating || 0);
+    } catch (error) {
+      console.error('Error fetching customer feedback:', error);
+    }
+  };
     const handleSearch = (query) =>{
       setSearchQuery(query);
       if(query.length > 0){
@@ -77,18 +94,59 @@ export default function ViewDishes() {
             {userId, dishId, sellerId, quantity: 1, price},
             {headers: {Authorization: `Bearer ${token}`}},
           );
-          console.log(userId, dishId);
-        if(response.data.message === "cannot be added"){
+        if(response.data.message === 'cannot be added'){
           setIsVisible(true);
+          setItemDetails({dishId,sellerId,price});
+        }else if(response.data.message === 'out of stock'){
+          Alert.alert('Out of Stock');
         }
         else{
           Alert.alert('Added to Basket', 'Dish has been added to your basket.');
         }
       } catch (error) {
-        console.error('error', error);
+        console.error('error in adding dishes', error);
       }
     };
-
+      const fetchBasket = async () => {
+        const token = await AsyncStorage.getItem('token');
+        const userId = await AsyncStorage.getItem('userId');
+        try {
+          const response = await axios.get(
+            `http://192.168.1.10:8080/basket/${userId}`,
+            {
+              headers: {Authorization: `Bearer ${token}`},
+            },
+          );
+          setBasket(response.data);
+        } catch (error) {
+          console.error(error);
+        }
+      };
+      useEffect(()=>{
+        fetchBasket();
+      },[]);
+        const removeItem = async (dishId: String) => {
+          const userId = await AsyncStorage.getItem('userId');
+          try {
+            await axios.delete('http://192.168.1.10:8080/basket/remove', {
+              data: {dishId, userId},
+            });
+          } catch (error) {
+            console.error(error);
+          }
+        };
+    const replaceItems = async() =>{
+      if (basket) {
+        const length = basket.items.length;
+        for (let i = 0; i < length; i++) {
+          const item = basket.items[i];
+          await removeItem(item.dish._id);
+        }
+      }
+      addToBasket(itemDetails.dishId,itemDetails.sellerId, itemDetails.price);
+      setItemDetails({});
+      setIsVisible(false);
+    };
     const toggleDescription = (dishId: string) => {
       setExpandedDescriptions(prevState => ({
         ...prevState,
@@ -104,6 +162,10 @@ export default function ViewDishes() {
         }));
       }
     };
+        const handleScroll = event => {
+          const scrollY = event.nativeEvent.contentOffset.y;
+          setShowHeaderText(scrollY > 60);
+        };
     const renderDishes = ({item}) => {
       const isExpanded = expandedDescriptions[item._id];
       const shouldShowReadMore = showReadMore[item._id];
@@ -196,6 +258,7 @@ export default function ViewDishes() {
           showsVerticalScrollIndicator={false}
           keyExtractor={item => item._id}
           renderItem={renderDishes}
+          onScroll={handleScroll}
           ListHeaderComponent={
             <>
               <View style={styles.restaurantContainer}>
@@ -208,9 +271,7 @@ export default function ViewDishes() {
                   </Text>
                 </View>
                 <View style={styles.ratingContainer}>
-                  <Text style={styles.itemRating}>
-                    ⭐ 3.5 {/* ⭐ {item.rating} ({item.ratingsCount}) */}
-                  </Text>
+                  <Text style={styles.itemRating}>⭐ {averageRating}</Text>
                 </View>
                 {/* <Text style={styles.offers}>{dummyData.offers}</Text> */}
               </View>
@@ -238,10 +299,14 @@ export default function ViewDishes() {
               </Text>
             </View>
             <View style={styles.footerContainer}>
-              <TouchableOpacity style={styles.buttonOne} onPress={() => setIsVisible(false)}>
+              <TouchableOpacity
+                style={styles.buttonOne}
+                onPress={() => setIsVisible(false)}>
                 <Text style={styles.buttonText}>No, thanks!</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.buttonTwo} onPress={() => replace()}>
+              <TouchableOpacity
+                style={styles.buttonTwo}
+                onPress={() => replaceItems()}>
                 <Text style={styles.buttonText}>Replace</Text>
               </TouchableOpacity>
             </View>
@@ -329,7 +394,10 @@ const styles = StyleSheet.create({
   },
   itemRating: {
     fontSize: 18,
-    color: 'goldenrod',
+    color: 'white',
+    textAlign: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   itemPrice: {
     fontSize: 18,
@@ -347,6 +415,16 @@ const styles = StyleSheet.create({
     color: 'red',
     fontWeight: 'bold',
     fontSize: 22,
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    marginRight: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#f0dfdf',
+    borderRadius: 10,
   },
   itemRatingContainer: {
     flex: 0.75,
@@ -383,11 +461,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   ratingContainer: {
-    backgroundColor: 'green',
-    marginVertical: '2%',
-    paddingVertical: '2%',
-    paddingHorizontal: '2%',
+    backgroundColor: 'lightgreen',
+    marginVertical: 10,
     borderRadius: 10,
+    flex: 0.35,
   },
   headingText: {
     fontSize: 20,
@@ -451,13 +528,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  headerContainer:{
-    
+  headerContainer: {},
+  headerText: {
+    fontSize: 20,
+    fontFamily: 'Arial',
   },
-  headerText:{
-    fontSize:20,
-    fontFamily:'Arial',
-  }
 });
 
 
