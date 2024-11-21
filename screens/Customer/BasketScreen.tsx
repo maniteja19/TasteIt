@@ -1,4 +1,4 @@
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,6 +19,7 @@ const BasketScreen = () => {
   const [basket, setBasket] = useState(null);
   const [totalPrice, setTotalPrice] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
   const handleHome = () => navigation.navigate('Home');
 
   const fetchBasket = async () => {
@@ -84,6 +86,14 @@ const BasketScreen = () => {
       fetchBasket();
     }, []),
   );
+  useEffect(() => {
+    const fetchLoader = async () => {
+      setLoading(true);
+      await fetchBasket();
+      setLoading(false);
+    };
+    fetchLoader();
+  }, []);
   const order = async basket => {
     const grandTotal = totalPrice;
     try {
@@ -114,32 +124,39 @@ const BasketScreen = () => {
       <Text style={styles.header}>My Basket</Text>
       {basket?.items.length > 0 ? (
         <>
-          <FlatList
-            data={basket.items || []}
-            keyExtractor={item => item.dish._id}
-            // style={styles.flat}
-            showsVerticalScrollIndicator={false}
-            renderItem={({item}) => (
-              <View style={styles.itemContainer}>
-                <View>
-                  <Text style={styles.dishName}>{item.dish.dishName}</Text>
-                  <Text style={styles.quantity}>
-                    ₹{item.dish.dishPrice.toFixed(2)}
-                  </Text>
-                </View>
-                <View>
-                  <View style={styles.buttonContainer}>
-                    <TouchableOpacity
-                      onPress={() =>
-                        updateQuantity(
-                          item.dish._id,
-                          item.quantity - 1,
-                          item.dish.dishPrice,
-                        )
-                      }>
-                      <Text style={styles.adjustButton}>-</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.quantityText}>{item.quantity}</Text>
+          {loading ? (
+            <ActivityIndicator
+              size="large"
+              color="#0000ff"
+              style={styles.loader}
+            />
+          ) : (
+            <FlatList
+              data={basket.items || []}
+              keyExtractor={item => item.dish._id}
+              // style={styles.flat}
+              showsVerticalScrollIndicator={false}
+              renderItem={({item}) => (
+                <View style={styles.itemContainer}>
+                  <View>
+                    <Text style={styles.dishName}>{item.dish.dishName}</Text>
+                    <Text style={styles.quantity}>
+                      ₹{item.dish.dishPrice.toFixed(2)}
+                    </Text>
+                  </View>
+                  <View>
+                    <View style={styles.buttonContainer}>
+                      <TouchableOpacity
+                        onPress={() =>
+                          updateQuantity(
+                            item.dish._id,
+                            item.quantity - 1,
+                            item.dish.dishPrice,
+                          )
+                        }>
+                        <Text style={styles.adjustButton}>-</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.quantityText}>{item.quantity}</Text>
                       <TouchableOpacity
                         onPress={() =>
                           updateQuantity(
@@ -147,32 +164,32 @@ const BasketScreen = () => {
                             item.quantity + 1,
                             item.dish.dishPrice,
                           )
-                        }
-                        >
+                        }>
                         <Text style={styles.adjustButton}>+</Text>
                       </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => removeItem(item.dish._id)}
+                      style={styles.deleteContainer}>
+                      <Text style={styles.deleteText}>Delete</Text>
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity
-                    onPress={() => removeItem(item.dish._id)}
-                    style={styles.deleteContainer}>
-                    <Text style={styles.deleteText}>Delete</Text>
-                  </TouchableOpacity>
                 </View>
-              </View>
-            )}
-            ListFooterComponent={
-              <View style={styles.footerContainer}>
-                <Text style={styles.summaryText}>Order Summary</Text>
-                <Text style={styles.summaryItem}>
-                  Total Price: ₹{totalPrice.toFixed(2)}
-                </Text>
-                <Text style={styles.summaryItem}>Delivery Fee: Free</Text>
-                <Text style={styles.summaryTotal}>
-                  Total Amount: ₹{totalPrice.toFixed(2)}
-                </Text>
-              </View>
-            }
-          />
+              )}
+              ListFooterComponent={
+                <View style={styles.footerContainer}>
+                  <Text style={styles.summaryText}>Order Summary</Text>
+                  <Text style={styles.summaryItem}>
+                    Total Price: ₹{totalPrice.toFixed(2)}
+                  </Text>
+                  <Text style={styles.summaryItem}>Delivery Fee: Free</Text>
+                  <Text style={styles.summaryTotal}>
+                    Total Amount: ₹{totalPrice.toFixed(2)}
+                  </Text>
+                </View>
+              }
+            />
+          )}
           <View style={styles.priceContainer}>
             <View style={styles.DeliveryButton}>
               <Text>Delivery at</Text>

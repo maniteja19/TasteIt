@@ -13,7 +13,7 @@ export default function AdminNavigation() {
   return (
     <Stack.Navigator initialRouteName="Admin">
       <Stack.Screen
-        name="AdminScreen"
+        name="Admin"
         component={AdminDashboard}
         options={{headerShown: false}}
       />

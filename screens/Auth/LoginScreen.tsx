@@ -30,7 +30,7 @@ export default function Login() {
       return setErrorMessage('Enter your email.');
      }
      else if(!password){
-      return setErrorMessage('Enter your password.')
+      return setErrorMessage('Enter your password.');
      }
             axios
                 .post('http://192.168.1.10:8080/login',userData)

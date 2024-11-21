@@ -45,9 +45,6 @@ const Profile = () => {
       console.log('No token found');
     }
   };
-  const handleOrders = () =>{
-    navigation.navigate('food', {screen: 'favourites'});
-  }
  useFocusEffect(
    useCallback(()=>{
       userDetail();
@@ -79,13 +76,13 @@ const Profile = () => {
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => handleOrders()}>
+          onPress={() => navigation.navigate('Reorder')}>
           <Text style={styles.buttonText}>View Orders</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('reorder')}>
+          onPress={() => navigation.navigate('Favourites')}>
           <Text style={styles.buttonText}>Wishlist</Text>
         </TouchableOpacity>
       </View>
